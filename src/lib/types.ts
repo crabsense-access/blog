@@ -33,6 +33,7 @@ export interface Post {
   category_id: string | null;
   author_id: string | null;
   published_at: string | null;
+  is_featured: boolean;
   created_at: string;
   updated_at: string;
 }

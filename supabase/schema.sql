@@ -59,9 +59,13 @@ create table if not exists public.posts (
   category_id uuid references public.categories (id) on delete set null,
   author_id uuid references public.profiles (id) on delete set null,
   published_at timestamptz,
+  is_featured boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Si la tabla ya existe, descomenta y ejecuta la siguiente línea:
+-- alter table public.posts add column if not exists is_featured boolean not null default false;
 
 create index if not exists posts_status_published_at_idx
   on public.posts (status, published_at desc);

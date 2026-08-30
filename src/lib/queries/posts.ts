@@ -20,6 +20,56 @@ function normalizePost(raw: any): PostWithRelations {
 
 export const POSTS_PER_PAGE = 9;
 
+export async function getFeaturedPost(): Promise<PostWithRelations | null> {
+  const supabase = await createClient();
+
+  // Busca primero el post marcado como destacado
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("is_featured", true)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  // Si existe, devolverlo
+  if (data) {
+    return normalizePost(data);
+  }
+
+  // Si no hay destacado, devolver el último publicado
+  const { data: fallback, error: fallbackError } = await supabase
+    .from("posts")
+    .select(POST_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (fallbackError) throw fallbackError;
+  return fallback ? normalizePost(fallback) : null;
+}
+
+export async function getRelatedPublishedPosts(
+  excludeId: string,
+  limit = 3
+): Promise<PostWithRelations[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .neq("id", excludeId)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []).map(normalizePost);
+}
+
 export async function getPublishedPosts(
   page = 1
 ): Promise<{ posts: PostWithRelations[]; count: number }> {

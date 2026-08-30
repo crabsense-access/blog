@@ -11,6 +11,7 @@ export const postFormSchema = z.object({
   cover_image_url: z.string().url("Tiene que ser una URL válida.").optional().or(z.literal("")),
   status: z.enum(["draft", "published"]),
   category_id: z.string().uuid().optional().or(z.literal("")),
+  is_featured: z.boolean().optional().default(false),
   tag_ids: z.array(z.string().uuid()).optional().default([]),
 });
 

@@ -146,6 +146,17 @@ export function PostForm({ categories, tags, post, action }: PostFormProps) {
         </div>
       </div>
 
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="is_featured"
+          name="is_featured"
+          defaultChecked={post?.is_featured ?? false}
+        />
+        <Label htmlFor="is_featured" className="font-normal cursor-pointer">
+          Destacar en portada
+        </Label>
+      </div>
+
       <div className="grid gap-2">
         <Label>Tags</Label>
         <div className="flex flex-wrap gap-4">

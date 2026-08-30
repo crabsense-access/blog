@@ -8,6 +8,7 @@ import { postFormSchema } from "@/lib/validations/post";
 
 function parseFormData(formData: FormData) {
   const tagIds = formData.getAll("tag_ids").map(String);
+  const isFeatured = formData.get("is_featured") === "on";
 
   return postFormSchema.safeParse({
     title: formData.get("title"),
@@ -17,6 +18,7 @@ function parseFormData(formData: FormData) {
     cover_image_url: formData.get("cover_image_url") ?? "",
     status: formData.get("status"),
     category_id: formData.get("category_id") ?? "",
+    is_featured: isFeatured,
     tag_ids: tagIds,
   });
 }
@@ -36,11 +38,19 @@ export async function createPost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, ...values } = parsed.data;
+  const { tag_ids, category_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Si es_featured es true, poner is_featured=false en todos los demás posts
+  if (is_featured) {
+    await supabase
+      .from("posts")
+      .update({ is_featured: false })
+      .eq("is_featured", true);
+  }
 
   const { data: post, error } = await supabase
     .from("posts")
@@ -48,6 +58,7 @@ export async function createPost(
       ...values,
       category_id: category_id || null,
       author_id: user?.id ?? null,
+      is_featured,
       published_at: values.status === "published" ? new Date().toISOString() : null,
     })
     .select("id")
@@ -65,6 +76,7 @@ export async function createPost(
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath("/");
   redirect("/admin/posts");
 }
 
@@ -79,7 +91,7 @@ export async function updatePost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, ...values } = parsed.data;
+  const { tag_ids, category_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
 
   const { data: current } = await supabase
@@ -93,9 +105,18 @@ export async function updatePost(
       ? (current?.published_at ?? new Date().toISOString())
       : null;
 
+  // Si es_featured es true, poner is_featured=false en todos los demás posts
+  if (is_featured) {
+    await supabase
+      .from("posts")
+      .update({ is_featured: false })
+      .neq("id", id)
+      .eq("is_featured", true);
+  }
+
   const { error } = await supabase
     .from("posts")
-    .update({ ...values, category_id: category_id || null, published_at })
+    .update({ ...values, category_id: category_id || null, published_at, is_featured })
     .eq("id", id);
 
   if (error) {
@@ -111,6 +132,7 @@ export async function updatePost(
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath("/");
   redirect("/admin/posts");
 }
 
