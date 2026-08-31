@@ -16,10 +16,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { slugify } from "@/lib/slugify";
+import { TagPill } from "@/components/site/tag-pill";
 import type { Category } from "@/lib/types";
 import { createCategory, updateCategory, type CategoryFormState } from "./actions";
 
 const initialState: CategoryFormState = {};
+const DEFAULT_PILL_COLOR = "#1a1a1a";
 
 export function CategoryDialog({ category }: { category?: Category }) {
   const [open, setOpen] = useState(false);
@@ -27,6 +29,8 @@ export function CategoryDialog({ category }: { category?: Category }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [slug, setSlug] = useState(category?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(category));
+  const [pillColor, setPillColor] = useState(category?.pill_color ?? DEFAULT_PILL_COLOR);
+  const [name, setName] = useState(category?.name ?? "");
 
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
@@ -60,8 +64,9 @@ export function CategoryDialog({ category }: { category?: Category }) {
             <Input
               id="name"
               name="name"
-              defaultValue={category?.name}
+              value={name}
               onChange={(e) => {
+                setName(e.target.value);
                 if (!slugTouched) setSlug(slugify(e.target.value));
               }}
               required
@@ -94,6 +99,25 @@ export function CategoryDialog({ category }: { category?: Category }) {
               defaultValue={category?.description ?? ""}
               rows={2}
             />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="pill_color">Color del pill</Label>
+            <div className="flex items-center gap-3">
+              <input
+                id="pill_color"
+                name="pill_color"
+                type="color"
+                value={pillColor}
+                onChange={(e) => setPillColor(e.target.value)}
+                className="h-9 w-14 cursor-pointer rounded border"
+              />
+              <TagPill tone="category" color={pillColor}>
+                {name || "Ejemplo"}
+              </TagPill>
+            </div>
+            {state.fieldErrors?.pill_color && (
+              <p className="text-sm text-destructive">{state.fieldErrors.pill_color[0]}</p>
+            )}
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <DialogFooter>

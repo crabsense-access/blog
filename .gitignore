@@ -34,9 +34,16 @@ yarn-error.log*
 .env*
 !.env.local.example
 
+# credenciales sueltas (Google OAuth, etc.) - nunca deben commitearse
+*.apps.googleusercontent.com.json
+
 # vercel
 .vercel
+
+# supabase CLI local cache (contiene datos de conexión del proyecto linkeado)
+/supabase/.temp
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*.local

@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Badge } from "@/components/ui/badge";
+import { AuthorAvatar } from "@/components/site/author-avatar";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getPostBySlug } from "@/lib/queries/posts";
+import { buildBlogPostingSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +30,11 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
 
   if (!post || post.status !== "published") notFound();
 
+  const authorLabel = post.author?.full_name || post.author?.email;
+
   return (
-    <article className="mx-auto max-w-3xl px-4 py-16">
+    <article className="mx-auto max-w-3xl px-10 py-16">
+      <JsonLd data={buildBlogPostingSchema(post)} />
       <div className="mb-6">
         {post.category && (
           <Link href={`/blog/categoria/${post.category.slug}`}>
@@ -38,15 +44,31 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
           </Link>
         )}
         <h1 className="text-4xl font-bold tracking-tight">{post.title}</h1>
-        {post.published_at && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            {new Date(post.published_at).toLocaleDateString("es-AR", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        )}
+
+        <div className="mt-4 flex items-center gap-3">
+          {authorLabel && (
+            <>
+              <AuthorAvatar author={post.author ?? {}} />
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-medium text-foreground">{authorLabel}</span>
+                {post.author?.public_title && (
+                  <span className="text-xs text-muted-foreground">
+                    {post.author.public_title}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+          {post.published_at && (
+            <p className={authorLabel ? "ml-2 text-sm text-muted-foreground" : "text-sm text-muted-foreground"}>
+              {new Date(post.published_at).toLocaleDateString("es-AR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          )}
+        </div>
       </div>
 
       {post.cover_image_url && (
@@ -63,7 +85,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
       {post.tags.length > 0 && (
         <div className="mt-10 flex flex-wrap gap-2 border-t pt-6">
           {post.tags.map((tag) => (
-            <Link key={tag.id} href={`/blog/tag/${tag.slug}`}>
+            <Link key={tag.id} href={`/blog/etiqueta/${tag.slug}`}>
               <Badge variant="outline">#{tag.name}</Badge>
             </Link>
           ))}

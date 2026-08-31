@@ -1,15 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import type { PostWithRelations } from "@/lib/types";
 
-const POST_WITH_RELATIONS_SELECT = `
+export const POST_WITH_RELATIONS_SELECT = `
   *,
   category:categories(*),
-  post_tags(tag:tags(*))
+  post_tags(tag:tags(*)),
+  author:profiles(id, full_name, email, public_title, avatar_url, linkedin_url)
 `;
 
 // Aplana la respuesta de Supabase (post_tags -> tag) en post.tags.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizePost(raw: any): PostWithRelations {
+export function normalizePost(raw: any): PostWithRelations {
   const { post_tags, ...rest } = raw;
   return {
     ...rest,
@@ -70,17 +71,48 @@ export async function getRelatedPublishedPosts(
   return (data ?? []).map(normalizePost);
 }
 
+export async function getPopularPosts(
+  excludeIds: string[] = [],
+  limit = 5
+): Promise<PostWithRelations[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("posts")
+    .select(POST_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("is_popular", true);
+
+  if (excludeIds.length > 0) {
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  const { data, error } = await query
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []).map(normalizePost);
+}
+
 export async function getPublishedPosts(
-  page = 1
+  page = 1,
+  excludeIds: string[] = []
 ): Promise<{ posts: PostWithRelations[]; count: number }> {
   const supabase = await createClient();
   const from = (page - 1) * POSTS_PER_PAGE;
   const to = from + POSTS_PER_PAGE - 1;
 
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("posts")
     .select(POST_WITH_RELATIONS_SELECT, { count: "exact" })
-    .eq("status", "published")
+    .eq("status", "published");
+
+  if (excludeIds.length > 0) {
+    query = query.not("id", "in", `(${excludeIds.join(",")})`);
+  }
+
+  const { data, error, count } = await query
     .order("published_at", { ascending: false })
     .range(from, to);
 

@@ -9,6 +9,7 @@ import { postFormSchema } from "@/lib/validations/post";
 function parseFormData(formData: FormData) {
   const tagIds = formData.getAll("tag_ids").map(String);
   const isFeatured = formData.get("is_featured") === "on";
+  const isPopular = formData.get("is_popular") === "on";
 
   return postFormSchema.safeParse({
     title: formData.get("title"),
@@ -18,7 +19,9 @@ function parseFormData(formData: FormData) {
     cover_image_url: formData.get("cover_image_url") ?? "",
     status: formData.get("status"),
     category_id: formData.get("category_id") ?? "",
+    author_id: formData.get("author_id") ?? "",
     is_featured: isFeatured,
+    is_popular: isPopular,
     tag_ids: tagIds,
   });
 }
@@ -38,7 +41,7 @@ export async function createPost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, is_featured, ...values } = parsed.data;
+  const { tag_ids, category_id, author_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
   const {
     data: { user },
@@ -57,7 +60,7 @@ export async function createPost(
     .insert({
       ...values,
       category_id: category_id || null,
-      author_id: user?.id ?? null,
+      author_id: author_id || user?.id || null,
       is_featured,
       published_at: values.status === "published" ? new Date().toISOString() : null,
     })
@@ -91,7 +94,7 @@ export async function updatePost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, is_featured, ...values } = parsed.data;
+  const { tag_ids, category_id, author_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
 
   const { data: current } = await supabase
@@ -116,7 +119,13 @@ export async function updatePost(
 
   const { error } = await supabase
     .from("posts")
-    .update({ ...values, category_id: category_id || null, published_at, is_featured })
+    .update({
+      ...values,
+      category_id: category_id || null,
+      author_id: author_id || null,
+      published_at,
+      is_featured,
+    })
     .eq("id", id);
 
   if (error) {

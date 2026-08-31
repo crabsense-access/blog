@@ -5,6 +5,7 @@ export interface Category {
   name: string;
   slug: string;
   description: string | null;
+  pill_color: string | null;
   created_at: string;
 }
 
@@ -18,6 +19,12 @@ export interface Tag {
 export interface Profile {
   id: string;
   full_name: string | null;
+  email: string | null;
+  public_title: string | null;
+  avatar_url: string | null;
+  is_featured_expert: boolean;
+  featured_position: number | null;
+  linkedin_url: string | null;
   role: "admin" | "editor";
   created_at: string;
 }
@@ -34,6 +41,7 @@ export interface Post {
   author_id: string | null;
   published_at: string | null;
   is_featured: boolean;
+  is_popular: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -41,4 +49,26 @@ export interface Post {
 export interface PostWithRelations extends Post {
   category: Category | null;
   tags: Tag[];
+  author: Pick<
+    Profile,
+    "id" | "full_name" | "email" | "public_title" | "avatar_url" | "linkedin_url"
+  > | null;
+}
+
+export interface HomeBanner {
+  id: true;
+  title: string;
+  image_url: string | null;
+  link_url: string | null;
+  updated_at: string;
+}
+
+export interface CategoryBlock {
+  position: 1 | 2 | 3;
+  category_id: string | null;
+  updated_at: string;
+}
+
+export interface CategoryBlockWithCategory extends CategoryBlock {
+  category: Category | null;
 }

@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 
 import { PostCard } from "@/components/site/post-card";
 import { Pagination } from "@/components/site/pagination";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getCategoryBySlug } from "@/lib/queries/categories";
 import { getPublishedPostsByCategory, POSTS_PER_PAGE } from "@/lib/queries/posts";
+import { buildItemListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,8 @@ export default async function CategoryPage({
   const totalPages = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
+    <div className="mx-auto max-w-5xl px-10 py-16">
+      <JsonLd data={buildItemListSchema(posts, page, POSTS_PER_PAGE)} />
       <p className="text-sm font-medium text-muted-foreground">Categoría</p>
       <h1 className="mb-8 text-3xl font-bold">{category.name}</h1>
 

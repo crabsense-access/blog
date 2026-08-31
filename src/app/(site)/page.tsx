@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 
+export const dynamic = 'force-dynamic';
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-20 md:py-32">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[108rem] mx-auto px-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
               Innovación y Transformación Digital
@@ -22,8 +24,8 @@ export default function HomePage() {
                   Leer Nuestro Blog
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-slate-900">
-                Contáctanos
+              <Button asChild size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-slate-900">
+                <Link href="/contacto">Contáctanos</Link>
               </Button>
             </div>
           </div>
@@ -32,7 +34,7 @@ export default function HomePage() {
 
       {/* Valores Section */}
       <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[108rem] mx-auto px-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Nuestros Valores</h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
@@ -72,7 +74,7 @@ export default function HomePage() {
 
       {/* Servicios Section */}
       <section className="py-16 md:py-24 bg-slate-50">
-        <div className="container mx-auto px-4">
+        <div className="max-w-[108rem] mx-auto px-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Nuestros Servicios</h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
@@ -110,47 +112,17 @@ export default function HomePage() {
 
       <Separator />
 
-      {/* Blog Preview Section */}
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-2">Últimas del Blog</h2>
-              <p className="text-slate-600">
-                Artículos, tendencias y análisis sobre transformación digital
-              </p>
-            </div>
-            <Link href="/blog" className="hidden md:block">
-              <Button variant="outline">
-                Ver Todo el Blog →
-              </Button>
-            </Link>
-          </div>
-
-          <div className="bg-slate-100 rounded-lg p-16 text-center">
-            <p className="text-slate-600 text-lg mb-4">
-              Descubre artículos, análisis y reflexiones sobre tecnología e innovación
-            </p>
-            <Link href="/blog">
-              <Button size="lg">Ir al Blog</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
       {/* CTA Section */}
       <section className="py-16 md:py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="container mx-auto px-4 text-center">
+        <div className="max-w-[108rem] mx-auto px-10 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             ¿Listo para transformar tu negocio?
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
             Contáctanos hoy y descubre cómo podemos ayudarte a alcanzar tus objetivos
           </p>
-          <Button size="lg" className="bg-white text-blue-600 hover:bg-slate-100">
-            Solicitar Consulta
+          <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-slate-100">
+            <Link href="/contacto">Solicitar Consulta</Link>
           </Button>
         </div>
       </section>

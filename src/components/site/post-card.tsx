@@ -2,19 +2,13 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PostImage } from "@/components/site/post-image";
 import type { PostWithRelations } from "@/lib/types";
 
 export function PostCard({ post }: { post: PostWithRelations }) {
   return (
     <Card className="overflow-hidden py-0">
-      {post.cover_image_url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={post.cover_image_url}
-          alt={post.title}
-          className="h-48 w-full object-cover"
-        />
-      )}
+      <PostImage src={post.cover_image_url} alt={post.title} className="h-48 w-full" />
       <CardHeader className="pt-6">
         {post.category && (
           <Badge variant="secondary" className="mb-2 w-fit">

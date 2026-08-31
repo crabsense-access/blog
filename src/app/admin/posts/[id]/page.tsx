@@ -5,6 +5,7 @@ import { ArrowLeftIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getCategories } from "@/lib/queries/categories";
 import { getTags } from "@/lib/queries/tags";
+import { getAllProfilesForAdmin } from "@/lib/queries/authors";
 import { getPostByIdForAdmin } from "@/lib/queries/posts";
 import { PostForm } from "../post-form";
 import { updatePost } from "../actions";
@@ -15,10 +16,11 @@ export default async function EditPostPage({
   params,
 }: PageProps<"/admin/posts/[id]">) {
   const { id } = await params;
-  const [post, categories, tags] = await Promise.all([
+  const [post, categories, tags, authors] = await Promise.all([
     getPostByIdForAdmin(id),
     getCategories(),
     getTags(),
+    getAllProfilesForAdmin(),
   ]);
 
   if (!post) notFound();
@@ -35,7 +37,13 @@ export default async function EditPostPage({
         </Button>
         <h1 className="text-2xl font-semibold">Editar nota</h1>
       </div>
-      <PostForm categories={categories} tags={tags} post={post} action={boundUpdatePost} />
+      <PostForm
+        categories={categories}
+        tags={tags}
+        authors={authors}
+        post={post}
+        action={boundUpdatePost}
+      />
     </div>
   );
 }

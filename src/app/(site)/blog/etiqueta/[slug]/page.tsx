@@ -2,15 +2,17 @@ import { notFound } from "next/navigation";
 
 import { PostCard } from "@/components/site/post-card";
 import { Pagination } from "@/components/site/pagination";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getTagBySlug } from "@/lib/queries/tags";
 import { getPublishedPostsByTag, POSTS_PER_PAGE } from "@/lib/queries/posts";
+import { buildItemListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function TagPage({
   params,
   searchParams,
-}: PageProps<"/blog/tag/[slug]">) {
+}: PageProps<"/blog/etiqueta/[slug]">) {
   const { slug } = await params;
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam ?? 1) || 1);
@@ -22,12 +24,13 @@ export default async function TagPage({
   const totalPages = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16">
-      <p className="text-sm font-medium text-muted-foreground">Tag</p>
+    <div className="mx-auto max-w-5xl px-10 py-16">
+      <JsonLd data={buildItemListSchema(posts, page, POSTS_PER_PAGE)} />
+      <p className="text-sm font-medium text-muted-foreground">Etiqueta</p>
       <h1 className="mb-8 text-3xl font-bold">#{tag.name}</h1>
 
       {posts.length === 0 ? (
-        <p className="text-muted-foreground">No hay notas con este tag todavía.</p>
+        <p className="text-muted-foreground">No hay notas con esta etiqueta todavía.</p>
       ) : (
         <>
           <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -35,7 +38,7 @@ export default async function TagPage({
               <PostCard key={post.id} post={post} />
             ))}
           </div>
-          <Pagination basePath={`/blog/tag/${slug}`} page={page} totalPages={totalPages} />
+          <Pagination basePath={`/blog/etiqueta/${slug}`} page={page} totalPages={totalPages} />
         </>
       )}
     </div>

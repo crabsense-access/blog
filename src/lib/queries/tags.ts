@@ -23,3 +23,15 @@ export async function getTagBySlug(slug: string): Promise<Tag | null> {
   if (error) throw error;
   return data;
 }
+
+export async function getTagsByCategory(categoryId: string): Promise<Tag[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("category_tags")
+    .select("tag:tags(*)")
+    .eq("category_id", categoryId);
+
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => row.tag).filter(Boolean);
+}

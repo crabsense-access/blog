@@ -42,6 +42,29 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Cualquier usuario autenticado puede tener sesión (incluido Google OAuth),
+  // pero solo los profiles con role="admin" pueden usar el panel.
+  if (isAdminRoute && user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profile?.role !== "admin") {
+      await supabase.auth.signOut();
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      url.searchParams.set("error", "not_admin");
+      const redirectResponse = NextResponse.redirect(url);
+      supabaseResponse.cookies.getAll().forEach((cookie) => {
+        redirectResponse.cookies.set(cookie);
+      });
+      return redirectResponse;
+    }
+  }
+
   if (isLoginRoute && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin";

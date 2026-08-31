@@ -36,6 +36,7 @@ export default async function AdminPostsPage() {
           <TableRow>
             <TableHead>Título</TableHead>
             <TableHead>Categoría</TableHead>
+            <TableHead>Autor</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead>Actualizada</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
@@ -46,6 +47,9 @@ export default async function AdminPostsPage() {
             <TableRow key={post.id}>
               <TableCell className="font-medium">{post.title}</TableCell>
               <TableCell>{post.category?.name ?? "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {post.author?.full_name ?? post.author?.email ?? "—"}
+              </TableCell>
               <TableCell>
                 <Badge variant={post.status === "published" ? "default" : "secondary"}>
                   {post.status === "published" ? "Publicada" : "Borrador"}
@@ -66,7 +70,7 @@ export default async function AdminPostsPage() {
           ))}
           {posts.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={6} className="text-center text-muted-foreground">
                 Todavía no creaste ninguna nota.
               </TableCell>
             </TableRow>

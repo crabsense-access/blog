@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -15,19 +16,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { slugify } from "@/lib/slugify";
-import type { Category, PostWithRelations, Tag } from "@/lib/types";
+import type { Category, PostWithRelations, Profile, Tag } from "@/lib/types";
 import type { PostFormState } from "./actions";
 
 interface PostFormProps {
   categories: Category[];
   tags: Tag[];
+  authors: Profile[];
   post?: PostWithRelations;
+  defaultAuthorId?: string;
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
 }
 
 const initialState: PostFormState = {};
 
-export function PostForm({ categories, tags, post, action }: PostFormProps) {
+export function PostForm({
+  categories,
+  tags,
+  authors,
+  post,
+  defaultAuthorId,
+  action,
+}: PostFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [title, setTitle] = useState(post?.title ?? "");
@@ -146,14 +156,44 @@ export function PostForm({ categories, tags, post, action }: PostFormProps) {
         </div>
       </div>
 
+      <div className="grid gap-2">
+        <Label htmlFor="author_id">Autor</Label>
+        <Select name="author_id" defaultValue={post?.author_id ?? defaultAuthorId ?? ""}>
+          <SelectTrigger id="author_id" className="w-full">
+            <SelectValue placeholder="Sin autor" />
+          </SelectTrigger>
+          <SelectContent>
+            {authors.map((author) => (
+              <SelectItem key={author.id} value={author.id}>
+                {author.full_name ?? author.email ?? author.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.fieldErrors?.author_id && (
+          <p className="text-sm text-destructive">{state.fieldErrors.author_id[0]}</p>
+        )}
+      </div>
+
       <div className="flex items-center gap-2">
-        <Checkbox
+        <Switch
           id="is_featured"
           name="is_featured"
           defaultChecked={post?.is_featured ?? false}
         />
         <Label htmlFor="is_featured" className="font-normal cursor-pointer">
           Destacar en portada
+        </Label>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch
+          id="is_popular"
+          name="is_popular"
+          defaultChecked={post?.is_popular ?? false}
+        />
+        <Label htmlFor="is_popular" className="font-normal cursor-pointer">
+          Mostrar en más vistos
         </Label>
       </div>
 

@@ -48,6 +48,26 @@ middleware.ts                # protege /admin y refresca la sesión de Supabase
    - Entrá a `/login` en el sitio (una vez corriendo) o a **Authentication > Users** en Supabase y creá un usuario con email/contraseña.
    - En **Table Editor > profiles**, buscá la fila con tu `id` y cambiá `role` a `admin`.
 
+### Login con Google (opcional)
+
+El login de `/admin` soporta email/contraseña y Google OAuth. Solo los usuarios
+con `role = 'admin'` en `profiles` pueden entrar al panel, sin importar el
+método de login (esto lo aplica `middleware.ts` en cada request a `/admin`).
+
+Para habilitar Google:
+
+1. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+   creá credenciales **OAuth client ID** de tipo **Web application**.
+2. En **Authorized redirect URIs**, agregá:
+   `https://<tu-project-ref>.supabase.co/auth/v1/callback`
+   (la URL fija de callback de Supabase, no la de tu app).
+3. En Supabase Dashboard, andá a **Authentication > Providers > Google**,
+   activalo y pegá el **Client ID** y **Client Secret** de Google.
+4. En **Authentication > URL Configuration > Redirect URLs**, agregá las URLs
+   de tu app donde corras el login (ej. `http://localhost:3002/**` en local
+   y tu dominio de producción), para que Supabase te deje redirigir de vuelta
+   a `/auth/callback` después del login con Google.
+
 ## 2. Variables de entorno
 
 ```bash
@@ -63,8 +83,8 @@ npm install
 npm run dev
 ```
 
-- Sitio público: http://localhost:3000
-- Panel de administración: http://localhost:3000/admin (te redirige a `/login` si no iniciaste sesión)
+- Sitio público: http://localhost:3002
+- Panel de administración: http://localhost:3002/admin (te redirige a `/login` si no iniciaste sesión)
 
 ## 4. Deploy en Vercel
 

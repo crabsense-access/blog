@@ -15,6 +15,7 @@ function parse(formData: FormData) {
     name: formData.get("name"),
     slug: formData.get("slug"),
     description: formData.get("description") ?? "",
+    pill_color: formData.get("pill_color") ?? "",
   });
 }
 
