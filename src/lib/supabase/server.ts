@@ -33,6 +33,28 @@ export async function createClient() {
   );
 }
 
+// Public-site client: intentionally does NOT read/forward auth cookies, so
+// every request goes out as anon. Used by the public (site) pages, which
+// only ever rely on "public read ..." RLS policies (fully open, or scoped
+// to status = 'published') and never need a signed-in session. This avoids
+// sending a visitor's stale/skewed-clock admin JWT on public routes, where
+// PostgREST would otherwise reject it (PGRST303 "JWT issued at future")
+// even though the request didn't need to be authenticated at all.
+export function createPublicClient() {
+  return createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {},
+      },
+    }
+  );
+}
+
 // Admin-only client using the service role key. Never import this in
 // client components or expose the key with a NEXT_PUBLIC_ prefix.
 export function createServiceRoleClient() {

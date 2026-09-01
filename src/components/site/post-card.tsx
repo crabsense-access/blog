@@ -1,19 +1,32 @@
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PostImage } from "@/components/site/post-image";
+import { TagPill } from "@/components/site/tag-pill";
 import type { PostWithRelations } from "@/lib/types";
 
 export function PostCard({ post }: { post: PostWithRelations }) {
+  const category = post.category;
+
   return (
-    <Card className="overflow-hidden py-0">
-      <PostImage src={post.cover_image_url} alt={post.title} className="h-48 w-full" />
+    <Card className="overflow-hidden rounded py-0">
+      <PostImage src={post.cover_image_url} alt={post.title} className="h-48 w-full rounded" />
       <CardHeader className="pt-6">
-        {post.category && (
-          <Badge variant="secondary" className="mb-2 w-fit">
-            {post.category.name}
-          </Badge>
+        {category && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            <TagPill tone="category" color={category.pill_color}>
+              {category.name}
+            </TagPill>
+            {post.subcategories.map((sub) => (
+              <TagPill
+                key={sub.id}
+                tone="subcategory"
+                href={`/blog/categoria/${category.slug}/${sub.slug}`}
+              >
+                {sub.name}
+              </TagPill>
+            ))}
+          </div>
         )}
         <CardTitle>
           <Link href={`/blog/${post.slug}`} className="hover:underline">

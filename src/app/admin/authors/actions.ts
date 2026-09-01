@@ -17,6 +17,7 @@ export async function updateAuthorProfile(
 ): Promise<AuthorFormState> {
   const parsed = authorFormSchema.safeParse({
     public_title: formData.get("public_title") ?? "",
+    bio: formData.get("bio") ?? "",
     is_featured_expert: formData.get("is_featured_expert") === "on",
     featured_position: formData.get("featured_position") ?? "",
     linkedin_url: formData.get("linkedin_url") ?? "",
@@ -26,7 +27,7 @@ export async function updateAuthorProfile(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { public_title, is_featured_expert, featured_position, linkedin_url } = parsed.data;
+  const { public_title, bio, is_featured_expert, featured_position, linkedin_url } = parsed.data;
   const supabase = await createClient();
 
   let avatar_url: string | undefined;
@@ -55,6 +56,7 @@ export async function updateAuthorProfile(
     .from("profiles")
     .update({
       public_title: public_title || null,
+      bio: bio || null,
       is_featured_expert,
       featured_position: featured_position === "" ? null : featured_position,
       linkedin_url: linkedin_url || null,

@@ -6,13 +6,15 @@ export interface Category {
   slug: string;
   description: string | null;
   pill_color: string | null;
+  parent_id: string | null;
   created_at: string;
 }
 
-export interface Tag {
+export interface Subcategory {
   id: string;
   name: string;
   slug: string;
+  category_id: string;
   created_at: string;
 }
 
@@ -21,6 +23,7 @@ export interface Profile {
   full_name: string | null;
   email: string | null;
   public_title: string | null;
+  bio: string | null;
   avatar_url: string | null;
   is_featured_expert: boolean;
   featured_position: number | null;
@@ -48,7 +51,7 @@ export interface Post {
 
 export interface PostWithRelations extends Post {
   category: Category | null;
-  tags: Tag[];
+  subcategories: Subcategory[];
   author: Pick<
     Profile,
     "id" | "full_name" | "email" | "public_title" | "avatar_url" | "linkedin_url"

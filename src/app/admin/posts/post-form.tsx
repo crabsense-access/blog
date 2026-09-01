@@ -16,12 +16,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { slugify } from "@/lib/slugify";
-import type { Category, PostWithRelations, Profile, Tag } from "@/lib/types";
+import type { Category, PostWithRelations, Profile, Subcategory } from "@/lib/types";
 import type { PostFormState } from "./actions";
 
 interface PostFormProps {
   categories: Category[];
-  tags: Tag[];
+  subcategories: Subcategory[];
   authors: Profile[];
   post?: PostWithRelations;
   defaultAuthorId?: string;
@@ -32,7 +32,7 @@ const initialState: PostFormState = {};
 
 export function PostForm({
   categories,
-  tags,
+  subcategories,
   authors,
   post,
   defaultAuthorId,
@@ -42,18 +42,30 @@ export function PostForm({
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [title, setTitle] = useState(post?.title ?? "");
   const [slug, setSlug] = useState(post?.slug ?? "");
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(
-    new Set(post?.tags.map((t) => t.id) ?? [])
+  const [categoryId, setCategoryId] = useState(post?.category_id ?? "");
+  const [selectedSubcategories, setSelectedSubcategories] = useState<Set<string>>(
+    new Set(post?.subcategories.map((s) => s.id) ?? [])
   );
 
-  function toggleTag(id: string) {
-    setSelectedTags((prev) => {
+  function handleCategoryChange(id: string) {
+    setCategoryId(id);
+    // Cambiar la categoría principal invalida cualquier subcategoría elegida
+    // (una subcategoría pertenece a una única categoría).
+    setSelectedSubcategories(new Set());
+  }
+
+  function toggleSubcategory(id: string) {
+    setSelectedSubcategories((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
   }
+
+  const categorySubcategories = subcategories.filter(
+    (sub) => sub.category_id === categoryId
+  );
 
   return (
     <form action={formAction} className="grid max-w-2xl gap-6">
@@ -125,35 +137,69 @@ export function PostForm({
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid gap-2">
-          <Label htmlFor="status">Estado</Label>
-          <Select name="status" defaultValue={post?.status ?? "draft"}>
-            <SelectTrigger id="status" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Borrador</SelectItem>
-              <SelectItem value="published">Publicada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid gap-2">
+        <Label htmlFor="status">Estado</Label>
+        <Select name="status" defaultValue={post?.status ?? "draft"}>
+          <SelectTrigger id="status" className="w-full sm:w-1/2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Borrador</SelectItem>
+            <SelectItem value="published">Publicada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="category_id">Categoría</Label>
-          <Select name="category_id" defaultValue={post?.category_id ?? ""}>
-            <SelectTrigger id="category_id" className="w-full">
-              <SelectValue placeholder="Sin categoría" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid gap-2">
+        <Label htmlFor="category_id">Categoría principal</Label>
+        <Select name="category_id" value={categoryId} onValueChange={handleCategoryChange}>
+          <SelectTrigger id="category_id" className="w-full sm:w-1/2">
+            <SelectValue placeholder="Elegí una categoría" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={category.id}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {state.fieldErrors?.category_id && (
+          <p className="text-sm text-destructive">{state.fieldErrors.category_id[0]}</p>
+        )}
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Subcategorías</Label>
+        {!categoryId ? (
+          <p className="text-sm text-muted-foreground">
+            Elegí una categoría principal para poder asignar subcategorías.
+          </p>
+        ) : categorySubcategories.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Esta categoría todavía no tiene subcategorías.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-4">
+            {categorySubcategories.map((sub) => (
+              <label key={sub.id} className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={selectedSubcategories.has(sub.id)}
+                  onCheckedChange={() => toggleSubcategory(sub.id)}
+                />
+                <input
+                  type="checkbox"
+                  name="subcategory_ids"
+                  value={sub.id}
+                  checked={selectedSubcategories.has(sub.id)}
+                  readOnly
+                  hidden
+                />
+                {sub.name}
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid gap-2">
@@ -195,34 +241,6 @@ export function PostForm({
         <Label htmlFor="is_popular" className="font-normal cursor-pointer">
           Mostrar en más vistos
         </Label>
-      </div>
-
-      <div className="grid gap-2">
-        <Label>Tags</Label>
-        <div className="flex flex-wrap gap-4">
-          {tags.map((tag) => (
-            <label key={tag.id} className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={selectedTags.has(tag.id)}
-                onCheckedChange={() => toggleTag(tag.id)}
-              />
-              <input
-                type="checkbox"
-                name="tag_ids"
-                value={tag.id}
-                checked={selectedTags.has(tag.id)}
-                readOnly
-                hidden
-              />
-              {tag.name}
-            </label>
-          ))}
-          {tags.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              Todavía no creaste tags.
-            </p>
-          )}
-        </div>
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}

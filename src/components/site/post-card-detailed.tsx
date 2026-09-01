@@ -20,6 +20,7 @@ export function PostCardDetailed({
   const readingTime = calculateReadingTime(post.content);
   const authorLabel = post.author?.full_name || post.author?.email;
   const tagLimit = size === "compact" ? 2 : 3;
+  const category = post.category;
 
   if (size === "compact") {
     return (
@@ -27,33 +28,31 @@ export function PostCardDetailed({
         <PostImage
           src={post.cover_image_url}
           alt={post.title}
-          className="row-start-1 h-full w-full rounded-md"
+          className="row-start-1 h-full w-full rounded"
         />
 
         <div className="row-start-1 flex min-w-0 flex-col justify-center gap-4">
-          <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-            {post.category ? (
-              <TagPill tone="category" color={post.category.pill_color}>
-                {post.category.name}
+          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            {category && (
+              <TagPill tone="category" color={category.pill_color}>
+                {category.name}
               </TagPill>
-            ) : (
-              <span />
             )}
-            <div className="flex items-center gap-1 pr-6">
-              {post.published_at && (
-                <>
-                  <span className="font-bold">
-                    {new Date(post.published_at).toLocaleDateString("es-AR", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <span>·</span>
-                </>
-              )}
-              <span>{readingTime} min</span>
-            </div>
+            {category &&
+              post.subcategories.slice(0, tagLimit).map((sub) => (
+                <TagPill
+                  key={sub.id}
+                  tone="subcategory"
+                  href={`/blog/categoria/${category.slug}/${sub.slug}`}
+                >
+                  {sub.name}
+                </TagPill>
+              ))}
+            {post.subcategories.length > tagLimit && (
+              <span className="text-xs text-muted-foreground">
+                +{post.subcategories.length - tagLimit}
+              </span>
+            )}
           </div>
 
           <Link href={`/blog/${post.slug}`} className="hover:underline">
@@ -62,22 +61,36 @@ export function PostCardDetailed({
               {post.title}
             </h3>
           </Link>
-        </div>
 
-        {post.tags.length > 0 && (
-          <div className="col-start-2 row-start-2 flex flex-wrap items-center gap-1">
-            {post.tags.slice(0, tagLimit).map((tag) => (
-              <TagPill key={tag.id} href={`/blog/etiqueta/${tag.slug}`}>
-                #{tag.name}
-              </TagPill>
-            ))}
-            {post.tags.length > tagLimit && (
-              <span className="text-xs text-muted-foreground">
-                +{post.tags.length - tagLimit}
-              </span>
+          {showExcerpt && post.excerpt && (
+            <p className="line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            {authorLabel && (
+              <>
+                <AuthorAvatar author={post.author ?? {}} className="size-5 text-[9px]" />
+                <Link href={`/blog/autor/${post.author?.id}`} className="hover:underline">
+                  {authorLabel}
+                </Link>
+                <span>·</span>
+              </>
             )}
+            {post.published_at && (
+              <>
+                <span className="font-bold">
+                  {new Date(post.published_at).toLocaleDateString("es-AR", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+                <span>·</span>
+              </>
+            )}
+            <span>{readingTime} min</span>
           </div>
-        )}
+        </div>
       </div>
     );
   }
@@ -87,18 +100,33 @@ export function PostCardDetailed({
       <PostImage
         src={post.cover_image_url}
         alt={post.title}
-        className="aspect-video w-full rounded-lg"
+        className="aspect-video w-full rounded"
       />
 
       <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-          {post.category ? (
-            <TagPill tone="category" color={post.category.pill_color}>
-              {post.category.name}
-            </TagPill>
-          ) : (
-            <span />
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-1">
+            {category && (
+              <TagPill tone="category" color={category.pill_color}>
+                {category.name}
+              </TagPill>
+            )}
+            {category &&
+              post.subcategories.slice(0, tagLimit).map((sub) => (
+                <TagPill
+                  key={sub.id}
+                  tone="subcategory"
+                  href={`/blog/categoria/${category.slug}/${sub.slug}`}
+                >
+                  {sub.name}
+                </TagPill>
+              ))}
+            {post.subcategories.length > tagLimit && (
+              <span className="text-xs text-muted-foreground">
+                +{post.subcategories.length - tagLimit}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {post.published_at && (
               <>
@@ -124,26 +152,16 @@ export function PostCardDetailed({
           <p className="line-clamp-2 text-sm text-muted-foreground">{post.excerpt}</p>
         )}
 
-        {post.tags.length > 0 && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {post.tags.slice(0, tagLimit).map((tag) => (
-              <TagPill key={tag.id} href={`/blog/etiqueta/${tag.slug}`}>
-                #{tag.name}
-              </TagPill>
-            ))}
-            {post.tags.length > tagLimit && (
-              <span className="text-xs text-muted-foreground">
-                +{post.tags.length - tagLimit}
-              </span>
-            )}
-          </div>
-        )}
-
         {authorLabel && (
           <div className="mt-auto flex items-center gap-2 pt-2">
             <AuthorAvatar author={post.author ?? {}} />
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-medium text-foreground">{authorLabel}</span>
+              <Link
+                href={`/blog/autor/${post.author?.id}`}
+                className="text-sm font-medium text-foreground hover:underline"
+              >
+                {authorLabel}
+              </Link>
               {post.author?.public_title && (
                 <span className="text-xs text-muted-foreground">
                   {post.author.public_title}

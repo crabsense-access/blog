@@ -10,11 +10,11 @@ export const postFormSchema = z.object({
   content: z.string().min(1, "El contenido no puede estar vacío."),
   cover_image_url: z.string().url("Tiene que ser una URL válida.").optional().or(z.literal("")),
   status: z.enum(["draft", "published"]),
-  category_id: z.string().uuid().optional().or(z.literal("")),
+  category_id: z.string().uuid("Elegí una categoría principal."),
   author_id: z.string().uuid().optional().or(z.literal("")),
   is_featured: z.boolean().optional().default(false),
   is_popular: z.boolean().optional().default(false),
-  tag_ids: z.array(z.string().uuid()).optional().default([]),
+  subcategory_ids: z.array(z.string().uuid()).optional().default([]),
 });
 
 export type PostFormValues = z.infer<typeof postFormSchema>;
@@ -35,15 +35,16 @@ export const categoryFormSchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
 
-export const tagFormSchema = z.object({
+export const subcategoryFormSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres."),
   slug: z
     .string()
     .min(2, "Mínimo 2 caracteres.")
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Usá minúsculas, números y guiones."),
+  category_id: z.string().uuid("Elegí una categoría."),
 });
 
-export type TagFormValues = z.infer<typeof tagFormSchema>;
+export type SubcategoryFormValues = z.infer<typeof subcategoryFormSchema>;
 
 export const homeBannerFormSchema = z.object({
   title: z.string().min(1, "El título no puede estar vacío."),
@@ -67,6 +68,7 @@ export type CategoryBlockFormValues = z.infer<typeof categoryBlockFormSchema>;
 
 export const authorFormSchema = z.object({
   public_title: z.string().max(100, "Máximo 100 caracteres.").optional().or(z.literal("")),
+  bio: z.string().max(1000, "Máximo 1000 caracteres.").optional().or(z.literal("")),
   is_featured_expert: z.boolean().optional().default(false),
   featured_position: z.coerce.number().int().min(1).max(5).optional().or(z.literal("")),
   linkedin_url: z.string().url("Tiene que ser una URL válida.").optional().or(z.literal("")),

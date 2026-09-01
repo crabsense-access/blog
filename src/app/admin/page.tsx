@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  const [{ count: postsCount }, { count: publishedCount }, { count: categoriesCount }, { count: tagsCount }] =
+  const [{ count: postsCount }, { count: publishedCount }, { count: categoriesCount }, { count: subcategoriesCount }] =
     await Promise.all([
       supabase.from("posts").select("*", { count: "exact", head: true }),
       supabase
@@ -14,14 +14,14 @@ export default async function AdminDashboardPage() {
         .select("*", { count: "exact", head: true })
         .eq("status", "published"),
       supabase.from("categories").select("*", { count: "exact", head: true }),
-      supabase.from("tags").select("*", { count: "exact", head: true }),
+      supabase.from("subcategories").select("*", { count: "exact", head: true }),
     ]);
 
   const stats = [
     { label: "Notas totales", value: postsCount ?? 0 },
     { label: "Publicadas", value: publishedCount ?? 0 },
     { label: "Categorías", value: categoriesCount ?? 0 },
-    { label: "Tags", value: tagsCount ?? 0 },
+    { label: "Subcategorías", value: subcategoriesCount ?? 0 },
   ];
 
   return (

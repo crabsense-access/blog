@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon },
   { href: "/admin/posts", label: "Notas", icon: Newspaper },
   { href: "/admin/categories", label: "Categorías", icon: FolderIcon },
-  { href: "/admin/tags", label: "Tags", icon: TagIcon },
+  { href: "/admin/subcategories", label: "Subcategorías", icon: TagIcon },
   { href: "/admin/category-blocks", label: "Bloques de categoría", icon: LayoutGridIcon },
   { href: "/admin/authors", label: "Autores", icon: UsersIcon },
   { href: "/admin/settings", label: "Configuración", icon: SettingsIcon },

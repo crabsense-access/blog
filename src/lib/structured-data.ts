@@ -38,6 +38,7 @@ export function buildBlogPostingSchema(post: PostWithRelations) {
         }
       : undefined,
     publisher: publisherSchema(),
+    articleSection: post.category?.name,
   };
 }
 

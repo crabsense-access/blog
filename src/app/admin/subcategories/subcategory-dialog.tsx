@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogFooter,
@@ -15,17 +22,33 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { slugify } from "@/lib/slugify";
-import type { Tag } from "@/lib/types";
-import { createTag, updateTag, type TagFormState } from "./actions";
+import type { Category, Subcategory } from "@/lib/types";
+import {
+  createSubcategory,
+  updateSubcategory,
+  type SubcategoryFormState,
+} from "./actions";
 
-const initialState: TagFormState = {};
+const initialState: SubcategoryFormState = {};
 
-export function TagDialog({ tag }: { tag?: Tag }) {
+interface SubcategoryDialogProps {
+  categories: Category[];
+  subcategory?: Subcategory;
+  defaultCategoryId?: string;
+}
+
+export function SubcategoryDialog({
+  categories,
+  subcategory,
+  defaultCategoryId,
+}: SubcategoryDialogProps) {
   const [open, setOpen] = useState(false);
-  const action = tag ? updateTag.bind(null, tag.id) : createTag;
+  const action = subcategory
+    ? updateSubcategory.bind(null, subcategory.id)
+    : createSubcategory;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [slug, setSlug] = useState(tag?.slug ?? "");
-  const [slugTouched, setSlugTouched] = useState(Boolean(tag));
+  const [slug, setSlug] = useState(subcategory?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(Boolean(subcategory));
 
   const [prevState, setPrevState] = useState(state);
   if (state !== prevState) {
@@ -38,20 +61,22 @@ export function TagDialog({ tag }: { tag?: Tag }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {tag ? (
+        {subcategory ? (
           <Button variant="ghost" size="icon">
             <PencilIcon className="size-4" />
           </Button>
         ) : (
-          <Button>
-            <PlusIcon />
-            Nuevo tag
+          <Button variant={defaultCategoryId ? "outline" : "default"} size={defaultCategoryId ? "sm" : "default"}>
+            <PlusIcon className={defaultCategoryId ? "size-3.5" : undefined} />
+            {defaultCategoryId ? "Subcategoría" : "Nueva subcategoría"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{tag ? "Editar tag" : "Nuevo tag"}</DialogTitle>
+          <DialogTitle>
+            {subcategory ? "Editar subcategoría" : "Nueva subcategoría"}
+          </DialogTitle>
         </DialogHeader>
         <form action={formAction} className="grid gap-4">
           <div className="grid gap-2">
@@ -59,7 +84,7 @@ export function TagDialog({ tag }: { tag?: Tag }) {
             <Input
               id="name"
               name="name"
-              defaultValue={tag?.name}
+              defaultValue={subcategory?.name}
               onChange={(e) => {
                 if (!slugTouched) setSlug(slugify(e.target.value));
               }}
@@ -83,6 +108,27 @@ export function TagDialog({ tag }: { tag?: Tag }) {
             />
             {state.fieldErrors?.slug && (
               <p className="text-sm text-destructive">{state.fieldErrors.slug[0]}</p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="category_id">Categoría</Label>
+            <Select
+              name="category_id"
+              defaultValue={subcategory?.category_id ?? defaultCategoryId ?? ""}
+            >
+              <SelectTrigger id="category_id" className="w-full">
+                <SelectValue placeholder="Elegí una categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {state.fieldErrors?.category_id && (
+              <p className="text-sm text-destructive">{state.fieldErrors.category_id[0]}</p>
             )}
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}

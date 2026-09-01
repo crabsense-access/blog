@@ -50,7 +50,12 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
             <>
               <AuthorAvatar author={post.author ?? {}} />
               <div className="flex flex-col leading-tight">
-                <span className="text-sm font-medium text-foreground">{authorLabel}</span>
+                <Link
+                  href={`/blog/autor/${post.author?.id}`}
+                  className="text-sm font-medium text-foreground hover:underline"
+                >
+                  {authorLabel}
+                </Link>
                 {post.author?.public_title && (
                   <span className="text-xs text-muted-foreground">
                     {post.author.public_title}
@@ -81,16 +86,6 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
       )}
 
       <div className="prose max-w-none whitespace-pre-wrap">{post.content}</div>
-
-      {post.tags.length > 0 && (
-        <div className="mt-10 flex flex-wrap gap-2 border-t pt-6">
-          {post.tags.map((tag) => (
-            <Link key={tag.id} href={`/blog/etiqueta/${tag.slug}`}>
-              <Badge variant="outline">#{tag.name}</Badge>
-            </Link>
-          ))}
-        </div>
-      )}
     </article>
   );
 }

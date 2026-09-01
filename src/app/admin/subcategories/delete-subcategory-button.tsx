@@ -13,9 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { deleteTag } from "./actions";
+import { deleteSubcategory } from "./actions";
 
-export function DeleteTagButton({ id, name }: { id: string; name: string }) {
+export function DeleteSubcategoryButton({ id, name }: { id: string; name: string }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -28,9 +28,9 @@ export function DeleteTagButton({ id, name }: { id: string; name: string }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Eliminar tag</DialogTitle>
+          <DialogTitle>Eliminar subcategoría</DialogTitle>
           <DialogDescription>
-            Se va a quitar el tag &quot;{name}&quot; de todas las notas.
+            Se va a quitar la subcategoría &quot;{name}&quot; de todas las notas.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -42,7 +42,7 @@ export function DeleteTagButton({ id, name }: { id: string; name: string }) {
             disabled={isPending}
             onClick={() =>
               startTransition(async () => {
-                await deleteTag(id);
+                await deleteSubcategory(id);
                 setOpen(false);
               })
             }

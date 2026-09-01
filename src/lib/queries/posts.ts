@@ -1,28 +1,31 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { PostWithRelations } from "@/lib/types";
 
 export const POST_WITH_RELATIONS_SELECT = `
   *,
   category:categories(*),
-  post_tags(tag:tags(*)),
+  subcategories:post_subcategories(subcategory:subcategories(*)),
   author:profiles(id, full_name, email, public_title, avatar_url, linkedin_url)
 `;
 
-// Aplana la respuesta de Supabase (post_tags -> tag) en post.tags.
+// Aplana la respuesta de Supabase (post_subcategories -> subcategory) en
+// post.subcategories. `category` ya viene con la forma correcta (FK directa,
+// a-uno) y pasa tal cual por el ...rest. `subcategory_filter` es un embed
+// auxiliar que algunas queries agregan solo para filtrar; se descarta acá.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizePost(raw: any): PostWithRelations {
-  const { post_tags, ...rest } = raw;
+  const { post_subcategories, subcategory_filter, ...rest } = raw;
   return {
     ...rest,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tags: (post_tags ?? []).map((pt: any) => pt.tag).filter(Boolean),
+    subcategories: (post_subcategories ?? []).map((ps: any) => ps.subcategory).filter(Boolean),
   };
 }
 
 export const POSTS_PER_PAGE = 9;
 
 export async function getFeaturedPost(): Promise<PostWithRelations | null> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
 
   // Busca primero el post marcado como destacado
   const { data, error } = await supabase
@@ -57,7 +60,7 @@ export async function getRelatedPublishedPosts(
   excludeId: string,
   limit = 3
 ): Promise<PostWithRelations[]> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
 
   const { data, error } = await supabase
     .from("posts")
@@ -75,7 +78,7 @@ export async function getPopularPosts(
   excludeIds: string[] = [],
   limit = 5
 ): Promise<PostWithRelations[]> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
 
   let query = supabase
     .from("posts")
@@ -99,7 +102,7 @@ export async function getPublishedPosts(
   page = 1,
   excludeIds: string[] = []
 ): Promise<{ posts: PostWithRelations[]; count: number }> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const from = (page - 1) * POSTS_PER_PAGE;
   const to = from + POSTS_PER_PAGE - 1;
 
@@ -123,7 +126,7 @@ export async function getPublishedPosts(
 export async function getPostBySlug(
   slug: string
 ): Promise<PostWithRelations | null> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_WITH_RELATIONS_SELECT)
@@ -138,7 +141,7 @@ export async function getPublishedPostsByCategory(
   categorySlug: string,
   page = 1
 ): Promise<{ posts: PostWithRelations[]; count: number }> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const from = (page - 1) * POSTS_PER_PAGE;
   const to = from + POSTS_PER_PAGE - 1;
 
@@ -154,22 +157,24 @@ export async function getPublishedPostsByCategory(
   return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };
 }
 
-export async function getPublishedPostsByTag(
-  tagSlug: string,
+export async function getPublishedPostsBySubcategory(
+  categorySlug: string,
+  subcategorySlug: string,
   page = 1
 ): Promise<{ posts: PostWithRelations[]; count: number }> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const from = (page - 1) * POSTS_PER_PAGE;
   const to = from + POSTS_PER_PAGE - 1;
 
   const { data, error, count } = await supabase
     .from("posts")
     .select(
-      `*, category:categories(*), post_tags!inner(tag:tags!inner(*))`,
+      `${POST_WITH_RELATIONS_SELECT}, subcategory_filter:post_subcategories!inner(subcategory:subcategories!inner(slug, category:categories!inner(slug)))`,
       { count: "exact" }
     )
     .eq("status", "published")
-    .eq("post_tags.tag.slug", tagSlug)
+    .eq("subcategory_filter.subcategory.slug", subcategorySlug)
+    .eq("subcategory_filter.subcategory.category.slug", categorySlug)
     .order("published_at", { ascending: false })
     .range(from, to);
 

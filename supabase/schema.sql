@@ -4,6 +4,19 @@
 -- ============ Extensiones ============
 create extension if not exists "pgcrypto";
 
+-- ============ Sistema de etiquetas (eliminado, reemplazado por subcategorías) ============
+-- Si tu base ya tenía el sistema de tags de una corrida anterior de este
+-- schema, esto lo elimina por completo (tablas + policies). Reemplazado por
+-- subcategories/post_subcategories más abajo.
+drop table if exists public.category_tags cascade;
+drop table if exists public.post_tags cascade;
+drop table if exists public.tags cascade;
+
+-- ============ Categorías múltiples por post (revertido a categoría única) ============
+-- Se probó una relación muchas-a-muchas (post_categories); se volvió a una
+-- única "categoría principal" por post (posts.category_id, más abajo).
+drop table if exists public.post_categories cascade;
+
 -- ============ Perfiles (rol de admin sobre auth.users, y/o autores del blog) ============
 -- id ya NO tiene foreign key hacia auth.users: además de las cuentas reales
 -- de admin/editor (creadas vía el trigger de abajo), esta tabla también
@@ -13,6 +26,7 @@ create table if not exists public.profiles (
   full_name text,
   email text,
   public_title text,
+  bio text,
   avatar_url text,
   is_featured_expert boolean not null default false,
   featured_position int,
@@ -29,6 +43,9 @@ create table if not exists public.profiles (
 -- alter table public.profiles add column if not exists is_featured_expert boolean not null default false;
 -- alter table public.profiles add column if not exists featured_position int;
 -- alter table public.profiles add column if not exists linkedin_url text;
+
+-- bio: descripción del autor mostrada en /blog/autor/[id].
+alter table public.profiles add column if not exists bio text;
 -- alter table public.profiles drop constraint if exists profiles_id_fkey;
 -- alter table public.profiles alter column id set default gen_random_uuid();
 
@@ -57,19 +74,18 @@ create table if not exists public.categories (
   slug text not null unique,
   description text,
   pill_color text,
+  parent_id uuid references public.categories (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 -- Si la tabla ya existe, descomenta y ejecutá:
 -- alter table public.categories add column if not exists pill_color text;
 
--- ============ Tags ============
-create table if not exists public.tags (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  slug text not null unique,
-  created_at timestamptz not null default now()
-);
+-- parent_id: null = "Categoría principal"; con valor = "categoría adicional"
+-- que cuelga de esa categoría principal (jerarquía de un solo nivel).
+alter table public.categories
+  add column if not exists parent_id uuid references public.categories (id) on delete set null;
+create index if not exists categories_parent_id_idx on public.categories (parent_id);
 
 -- ============ Posts ============
 create table if not exists public.posts (
@@ -112,19 +128,25 @@ create trigger posts_set_updated_at
   before update on public.posts
   for each row execute procedure public.set_updated_at();
 
--- ============ Relación posts <-> tags ============
-create table if not exists public.post_tags (
-  post_id uuid not null references public.posts (id) on delete cascade,
-  tag_id uuid not null references public.tags (id) on delete cascade,
-  primary key (post_id, tag_id)
-);
-
--- ============ Relación categorías <-> tags fijos (pills debajo del título) ============
-create table if not exists public.category_tags (
+-- ============ Subcategorías (cada una pertenece a una única categoría) ============
+create table if not exists public.subcategories (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text not null,
   category_id uuid not null references public.categories (id) on delete cascade,
-  tag_id uuid not null references public.tags (id) on delete cascade,
-  primary key (category_id, tag_id)
+  created_at timestamptz not null default now(),
+  unique (category_id, slug)
 );
+create index if not exists subcategories_category_id_idx on public.subcategories (category_id);
+
+-- ============ Relación posts <-> subcategorías (muchas a muchas) ============
+create table if not exists public.post_subcategories (
+  post_id uuid not null references public.posts (id) on delete cascade,
+  subcategory_id uuid not null references public.subcategories (id) on delete cascade,
+  primary key (post_id, subcategory_id)
+);
+create index if not exists post_subcategories_subcategory_id_idx
+  on public.post_subcategories (subcategory_id);
 
 -- ============ Bloques de categoría (3 bloques fijos configurables de /blog) ============
 create table if not exists public.category_blocks (
@@ -167,36 +189,41 @@ create trigger home_banner_set_updated_at
 -- ============ Row Level Security ============
 alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
-alter table public.tags enable row level security;
+alter table public.subcategories enable row level security;
 alter table public.posts enable row level security;
-alter table public.post_tags enable row level security;
-alter table public.category_tags enable row level security;
+alter table public.post_subcategories enable row level security;
 alter table public.home_banner enable row level security;
 alter table public.category_blocks enable row level security;
 
--- Lectura pública: cualquiera puede ver posts publicados, categorías y tags.
+-- Lectura pública: cualquiera puede ver posts publicados, categorías y subcategorías.
+-- (drop + create en vez de "create policy if not exists" porque Postgres no
+-- soporta esa cláusula para policies — así el script se puede re-correr.)
+drop policy if exists "public read published posts" on public.posts;
 create policy "public read published posts" on public.posts
   for select using (status = 'published');
 
+drop policy if exists "public read categories" on public.categories;
 create policy "public read categories" on public.categories
   for select using (true);
 
-create policy "public read tags" on public.tags
+drop policy if exists "public read subcategories" on public.subcategories;
+create policy "public read subcategories" on public.subcategories
   for select using (true);
 
-create policy "public read post_tags" on public.post_tags
-  for select using (true);
-
-create policy "public read category_tags" on public.category_tags
+drop policy if exists "public read post_subcategories" on public.post_subcategories;
+create policy "public read post_subcategories" on public.post_subcategories
   for select using (true);
 
 -- Perfiles: lectura pública (se usa para mostrar el nombre del autor en el sitio).
+drop policy if exists "public read profiles" on public.profiles;
 create policy "public read profiles" on public.profiles
   for select using (true);
 
+drop policy if exists "public read home_banner" on public.home_banner;
 create policy "public read home_banner" on public.home_banner
   for select using (true);
 
+drop policy if exists "public read category_blocks" on public.category_blocks;
 create policy "public read category_blocks" on public.category_blocks
   for select using (true);
 
@@ -204,34 +231,39 @@ create policy "public read category_blocks" on public.category_blocks
 -- drop policy if exists "users read own profile" on public.profiles;
 
 -- Cada usuario puede editar su propio profile (ej. public_title).
+drop policy if exists "users update own profile" on public.profiles;
 create policy "users update own profile" on public.profiles
   for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- Cualquier autenticado (admin/editor) puede gestionar cualquier profile,
 -- incluidos los autores "solo de contenido" sin cuenta de login.
+drop policy if exists "authenticated manage profiles" on public.profiles;
 create policy "authenticated manage profiles" on public.profiles
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
--- Admins/editores autenticados: acceso total a posts, categorías y tags.
+-- Admins/editores autenticados: acceso total a posts, categorías y subcategorías.
 -- (el service role key del backend también bypassea RLS si hiciera falta)
+drop policy if exists "authenticated manage posts" on public.posts;
 create policy "authenticated manage posts" on public.posts
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
+drop policy if exists "authenticated manage categories" on public.categories;
 create policy "authenticated manage categories" on public.categories
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
-create policy "authenticated manage tags" on public.tags
+drop policy if exists "authenticated manage subcategories" on public.subcategories;
+create policy "authenticated manage subcategories" on public.subcategories
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
-create policy "authenticated manage post_tags" on public.post_tags
+drop policy if exists "authenticated manage post_subcategories" on public.post_subcategories;
+create policy "authenticated manage post_subcategories" on public.post_subcategories
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
-create policy "authenticated manage category_tags" on public.category_tags
-  for all using (auth.uid() is not null) with check (auth.uid() is not null);
-
+drop policy if exists "authenticated manage home_banner" on public.home_banner;
 create policy "authenticated manage home_banner" on public.home_banner
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
+drop policy if exists "authenticated manage category_blocks" on public.category_blocks;
 create policy "authenticated manage category_blocks" on public.category_blocks
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 

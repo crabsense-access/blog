@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { PostCard } from "@/components/site/post-card";
-import { Pagination } from "@/components/site/pagination";
-import { PostImage } from "@/components/site/post-image";
+import { FeaturedPostImage, FeaturedPostContent } from "@/components/site/featured-post-section";
+import { RelatedPostsSidebar } from "@/components/site/related-posts-sidebar";
+import { AuthorInfoCard } from "@/components/site/author-info-card";
+import { PostCardVerticalContent } from "@/components/site/post-card-vertical";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getAuthorById, getPublishedPostsByAuthor } from "@/lib/queries/authors";
 import { POSTS_PER_PAGE } from "@/lib/queries/posts";
@@ -10,54 +11,60 @@ import { buildItemListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
-export default async function AuthorPage({
-  params,
-  searchParams,
-}: PageProps<"/blog/autor/[id]">) {
+export default async function AuthorPage({ params }: PageProps<"/blog/autor/[id]">) {
   const { id } = await params;
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam ?? 1) || 1);
 
   const author = await getAuthorById(id);
   if (!author) notFound();
 
-  const { posts, count } = await getPublishedPostsByAuthor(id, page);
-  const totalPages = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
+  const { posts: authorPosts } = await getPublishedPostsByAuthor(id, 1);
+  const featuredPost = authorPosts[0];
+  const secondPost = authorPosts[1];
+  const thirdPost = authorPosts[2];
+  const moreArticles = authorPosts.slice(3);
 
   return (
-    <div className="mx-auto max-w-5xl px-10 py-16">
-      <JsonLd data={buildItemListSchema(posts, page, POSTS_PER_PAGE)} />
-      <div className="mb-10 flex items-center gap-4">
-        <PostImage
-          src={author.avatar_url}
-          alt={author.full_name ?? "Autor"}
-          className="size-16 shrink-0 rounded-full"
-        />
-        <div>
-          <h1 className="text-2xl font-bold">{author.full_name ?? "Autor"}</h1>
-          {author.public_title && (
-            <p className="text-sm text-muted-foreground">{author.public_title}</p>
-          )}
-        </div>
-      </div>
+    <div className="mx-auto max-w-[108rem] px-10 pb-16">
+      <JsonLd data={buildItemListSchema(moreArticles, 1, POSTS_PER_PAGE)} />
 
-      {posts.length === 0 ? (
+      {featuredPost ? (
+        <section className="w-full min-h-[calc(100vh-69px)] bg-gray-100 py-12">
+          <div className="grid grid-cols-2 gap-x-10 gap-y-4">
+            <FeaturedPostImage post={featuredPost} />
+            <AuthorInfoCard author={author} />
+            <FeaturedPostContent post={featuredPost} />
+            <RelatedPostsSidebar
+              relatedPosts={[secondPost, thirdPost].filter((p) => p !== undefined)}
+              alignTop={false}
+              showPromptDownload={false}
+            />
+          </div>
+        </section>
+      ) : (
+        <div className="mb-16 max-w-md">
+          <AuthorInfoCard author={author} />
+        </div>
+      )}
+
+      {moreArticles.length > 0 && (
+        <section className="mb-16 pt-24">
+          <h2 className="mb-6 pl-2 text-2xl font-semibold uppercase">
+            Más artículos de {author.full_name ?? "este autor"}
+          </h2>
+          <div className="grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {moreArticles.map((post) => (
+              <div key={post.id} className="pb-10">
+                <PostCardVerticalContent post={post} metaPosition="footer" />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {!featuredPost && (
         <p className="text-muted-foreground">
           Todavía no hay notas publicadas de este autor.
         </p>
-      ) : (
-        <>
-          <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-          <Pagination
-            basePath={`/blog/autor/${id}`}
-            page={page}
-            totalPages={totalPages}
-          />
-        </>
       )}
     </div>
   );

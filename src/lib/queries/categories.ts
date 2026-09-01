@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/types";
 
 export async function getCategories(): Promise<Category[]> {
@@ -13,7 +13,7 @@ export async function getCategories(): Promise<Category[]> {
 }
 
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("categories")
     .select("*")

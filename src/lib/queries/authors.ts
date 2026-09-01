@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createPublicClient } from "@/lib/supabase/server";
 import { POST_WITH_RELATIONS_SELECT, normalizePost, POSTS_PER_PAGE } from "@/lib/queries/posts";
 import type { PostWithRelations, Profile } from "@/lib/types";
 
 export async function getFeaturedExperts(): Promise<Profile[]> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -16,7 +16,7 @@ export async function getFeaturedExperts(): Promise<Profile[]> {
 }
 
 export async function getAuthorById(id: string): Promise<Profile | null> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
@@ -31,7 +31,7 @@ export async function getPublishedPostsByAuthor(
   authorId: string,
   page = 1
 ): Promise<{ posts: PostWithRelations[]; count: number }> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const from = (page - 1) * POSTS_PER_PAGE;
   const to = from + POSTS_PER_PAGE - 1;
 

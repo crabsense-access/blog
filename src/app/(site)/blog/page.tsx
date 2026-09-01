@@ -11,8 +11,8 @@ import {
   getPopularPosts,
 } from '@/lib/queries/posts';
 import { getCategoryBlocks, getPostsByCategoryId } from '@/lib/queries/category-blocks';
+import { getSubcategoriesByCategoryId } from '@/lib/queries/subcategories';
 import { getFeaturedExperts } from '@/lib/queries/authors';
-import { getTagsByCategory } from '@/lib/queries/tags';
 import { buildBlogSchema } from '@/lib/structured-data';
 
 export const dynamic = 'force-dynamic';
@@ -46,11 +46,11 @@ export default async function BlogIndexPage() {
     await Promise.all(
       categoryBlocks.map(async (block) => {
         if (!block.category) return null;
-        const [posts, tags] = await Promise.all([
+        const [posts, subcategories] = await Promise.all([
           getPostsByCategoryId(block.category.id, 20),
-          getTagsByCategory(block.category.id),
+          getSubcategoriesByCategoryId(block.category.id),
         ]);
-        return { category: block.category, posts, tags };
+        return { category: block.category, posts, subcategories };
       })
     )
   ).filter((entry): entry is NonNullable<typeof entry> => entry !== null);
@@ -67,10 +67,10 @@ export default async function BlogIndexPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
       <JsonLd data={buildBlogSchema(blogSchemaPosts)} />
-      <div className="max-w-[108rem] mx-auto px-10 py-12">
+      <div className="max-w-[108rem] mx-auto px-10 pb-12">
         {/* Bloque Principal */}
         {featuredPost && (
-          <section className="w-full min-h-[calc(100vh-69px-3rem)] bg-gray-100 pb-28">
+          <section className="w-full min-h-[calc(100vh-69px)] bg-gray-100 py-12">
             <div className="grid gap-10 md:grid-cols-2">
               <FeaturedPostSection post={featuredPost} />
               <RelatedPostsSidebar relatedPosts={relatedPosts} />
@@ -96,13 +96,13 @@ export default async function BlogIndexPage() {
 
         {/* Bloques de categoría */}
         <div className="mb-16 flex flex-col gap-20">
-          {categoryBlocksWithPosts.map(({ category, posts, tags }) => (
+          {categoryBlocksWithPosts.map(({ category, posts, subcategories }) => (
             <CategoryCarouselRow
               key={category.id}
               categoryName={category.name}
               categorySlug={category.slug}
               posts={posts}
-              tags={tags}
+              subcategories={subcategories}
             />
           ))}
         </div>

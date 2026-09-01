@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import { POST_WITH_RELATIONS_SELECT, normalizePost } from "@/lib/queries/posts";
 import type { CategoryBlockWithCategory, PostWithRelations } from "@/lib/types";
 
 export async function getCategoryBlocks(): Promise<CategoryBlockWithCategory[]> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("category_blocks")
     .select("*, category:categories(*)")
@@ -17,7 +17,7 @@ export async function getPostsByCategoryId(
   categoryId: string,
   limit = 20
 ): Promise<PostWithRelations[]> {
-  const supabase = await createClient();
+  const supabase = await createPublicClient();
   const { data, error } = await supabase
     .from("posts")
     .select(POST_WITH_RELATIONS_SELECT)

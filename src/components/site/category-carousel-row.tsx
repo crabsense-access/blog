@@ -6,15 +6,14 @@ import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PostCardVertical } from "@/components/site/post-card-vertical";
-import { TagPill } from "@/components/site/tag-pill";
 import { cn } from "@/lib/utils";
-import type { PostWithRelations, Tag } from "@/lib/types";
+import type { PostWithRelations, Subcategory } from "@/lib/types";
 
 interface CategoryCarouselRowProps {
   categoryName: string;
   categorySlug: string;
   posts: PostWithRelations[];
-  tags: Tag[];
+  subcategories: Subcategory[];
 }
 
 const SCROLL_AMOUNT = 600;
@@ -23,7 +22,7 @@ export function CategoryCarouselRow({
   categoryName,
   categorySlug,
   posts,
-  tags,
+  subcategories,
 }: CategoryCarouselRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -46,58 +45,64 @@ export function CategoryCarouselRow({
 
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between gap-4 px-4">
-        <h2 className="pl-2 text-2xl font-semibold uppercase">
-          <Link
-            href={`/blog/categoria/${categorySlug}`}
-            className="transition-opacity hover:opacity-70"
-          >
-            {categoryName}
-          </Link>
-        </h2>
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/blog/categoria/${categorySlug}`}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
-          >
-            Ver todo →
-          </Link>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="rounded-full"
-              disabled={!canScrollPrev}
-              onClick={() => scrollBy(-1)}
+      <div className="mb-4 px-4">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="pl-2 text-2xl font-semibold uppercase">
+            <Link
+              href={`/blog/categoria/${categorySlug}`}
+              className="transition-opacity hover:opacity-70"
             >
-              <ChevronLeftIcon className="size-4" />
-              <span className="sr-only">Anterior</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="rounded-full"
-              disabled={!canScrollNext}
-              onClick={() => scrollBy(1)}
+              {categoryName}
+            </Link>
+          </h2>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/blog/categoria/${categorySlug}`}
+              className="text-sm font-medium text-blue-600 hover:text-blue-700"
             >
-              <ChevronRightIcon className="size-4" />
-              <span className="sr-only">Siguiente</span>
-            </Button>
+              Ver todo →
+            </Link>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                disabled={!canScrollPrev}
+                onClick={() => scrollBy(-1)}
+              >
+                <ChevronLeftIcon className="size-4" />
+                <span className="sr-only">Anterior</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-full"
+                disabled={!canScrollNext}
+                onClick={() => scrollBy(1)}
+              >
+                <ChevronRightIcon className="size-4" />
+                <span className="sr-only">Siguiente</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {tags.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <TagPill key={tag.id} href={`/blog/etiqueta/${tag.slug}`}>
-              #{tag.name}
-            </TagPill>
-          ))}
-        </div>
-      )}
+        {subcategories.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 pl-2 text-sm text-muted-foreground">
+            {subcategories.map((sub) => (
+              <Link
+                key={sub.id}
+                href={`/blog/categoria/${categorySlug}/${sub.slug}`}
+                className="transition-colors hover:text-foreground hover:underline"
+              >
+                {sub.name}
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
 
       {posts.length > 0 ? (
         <div

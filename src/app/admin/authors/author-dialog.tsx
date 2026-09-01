@@ -6,6 +6,7 @@ import { PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -80,6 +81,20 @@ export function AuthorDialog({ profile }: { profile: Profile }) {
             />
             {state.fieldErrors?.public_title && (
               <p className="text-sm text-destructive">{state.fieldErrors.public_title[0]}</p>
+            )}
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor={`bio-${profile.id}`}>Bio</Label>
+            <Textarea
+              id={`bio-${profile.id}`}
+              name="bio"
+              defaultValue={profile.bio ?? ""}
+              rows={3}
+              placeholder="Breve descripción del autor..."
+            />
+            {state.fieldErrors?.bio && (
+              <p className="text-sm text-destructive">{state.fieldErrors.bio[0]}</p>
             )}
           </div>
 

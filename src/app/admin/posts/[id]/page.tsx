@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getCategories } from "@/lib/queries/categories";
-import { getTags } from "@/lib/queries/tags";
+import { getSubcategories } from "@/lib/queries/subcategories";
 import { getAllProfilesForAdmin } from "@/lib/queries/authors";
 import { getPostByIdForAdmin } from "@/lib/queries/posts";
 import { PostForm } from "../post-form";
@@ -16,10 +16,10 @@ export default async function EditPostPage({
   params,
 }: PageProps<"/admin/posts/[id]">) {
   const { id } = await params;
-  const [post, categories, tags, authors] = await Promise.all([
+  const [post, categories, subcategories, authors] = await Promise.all([
     getPostByIdForAdmin(id),
     getCategories(),
-    getTags(),
+    getSubcategories(),
     getAllProfilesForAdmin(),
   ]);
 
@@ -39,7 +39,7 @@ export default async function EditPostPage({
       </div>
       <PostForm
         categories={categories}
-        tags={tags}
+        subcategories={subcategories}
         authors={authors}
         post={post}
         action={boundUpdatePost}

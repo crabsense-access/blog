@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { postFormSchema } from "@/lib/validations/post";
 
 function parseFormData(formData: FormData) {
-  const tagIds = formData.getAll("tag_ids").map(String);
+  const subcategoryIds = formData.getAll("subcategory_ids").map(String);
   const isFeatured = formData.get("is_featured") === "on";
   const isPopular = formData.get("is_popular") === "on";
 
@@ -18,11 +18,11 @@ function parseFormData(formData: FormData) {
     content: formData.get("content"),
     cover_image_url: formData.get("cover_image_url") ?? "",
     status: formData.get("status"),
-    category_id: formData.get("category_id") ?? "",
+    category_id: formData.get("category_id"),
     author_id: formData.get("author_id") ?? "",
     is_featured: isFeatured,
     is_popular: isPopular,
-    tag_ids: tagIds,
+    subcategory_ids: subcategoryIds,
   });
 }
 
@@ -41,7 +41,7 @@ export async function createPost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, author_id, is_featured, ...values } = parsed.data;
+  const { subcategory_ids, author_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
   const {
     data: { user },
@@ -59,7 +59,6 @@ export async function createPost(
     .from("posts")
     .insert({
       ...values,
-      category_id: category_id || null,
       author_id: author_id || user?.id || null,
       is_featured,
       published_at: values.status === "published" ? new Date().toISOString() : null,
@@ -71,10 +70,10 @@ export async function createPost(
     return { error: error?.message ?? "No se pudo crear la nota." };
   }
 
-  if (tag_ids.length > 0) {
+  if (subcategory_ids.length > 0) {
     await supabase
-      .from("post_tags")
-      .insert(tag_ids.map((tag_id) => ({ post_id: post.id, tag_id })));
+      .from("post_subcategories")
+      .insert(subcategory_ids.map((subcategory_id) => ({ post_id: post.id, subcategory_id })));
   }
 
   revalidatePath("/admin/posts");
@@ -94,7 +93,7 @@ export async function updatePost(
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
-  const { tag_ids, category_id, author_id, is_featured, ...values } = parsed.data;
+  const { subcategory_ids, author_id, is_featured, ...values } = parsed.data;
   const supabase = await createClient();
 
   const { data: current } = await supabase
@@ -121,7 +120,6 @@ export async function updatePost(
     .from("posts")
     .update({
       ...values,
-      category_id: category_id || null,
       author_id: author_id || null,
       published_at,
       is_featured,
@@ -132,11 +130,11 @@ export async function updatePost(
     return { error: error.message };
   }
 
-  await supabase.from("post_tags").delete().eq("post_id", id);
-  if (tag_ids.length > 0) {
+  await supabase.from("post_subcategories").delete().eq("post_id", id);
+  if (subcategory_ids.length > 0) {
     await supabase
-      .from("post_tags")
-      .insert(tag_ids.map((tag_id) => ({ post_id: id, tag_id })));
+      .from("post_subcategories")
+      .insert(subcategory_ids.map((subcategory_id) => ({ post_id: id, subcategory_id })));
   }
 
   revalidatePath("/admin/posts");

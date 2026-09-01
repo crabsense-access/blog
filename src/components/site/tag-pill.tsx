@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 interface TagPillProps {
   children: ReactNode;
   href?: string;
-  tone?: "default" | "category";
+  tone?: "default" | "category" | "subcategory";
   color?: string | null;
 }
 
@@ -16,12 +16,14 @@ export function TagPill({ children, href, tone = "default", color }: TagPillProp
   const content = (
     <span
       className={cn(
-        "inline-flex w-fit items-center rounded-full px-3 py-1 text-[0.65rem] uppercase transition-colors",
+        "inline-flex w-fit items-center rounded-full px-3 py-1 text-xs uppercase transition-colors",
         tone === "category"
           ? customColor
             ? undefined
             : "bg-primary text-white hover:bg-primary/90"
-          : "bg-neutral-200 text-muted-foreground hover:bg-muted-foreground hover:text-muted"
+          : tone === "subcategory"
+            ? "border border-border bg-muted text-muted-foreground hover:bg-muted/70"
+            : "bg-neutral-200 text-muted-foreground hover:bg-muted-foreground hover:text-muted"
       )}
       style={customColor ? { backgroundColor: customColor, color: "#ffffff" } : undefined}
     >

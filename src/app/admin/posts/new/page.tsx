@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeftIcon } from "lucide-react";
 
 import { getCategories } from "@/lib/queries/categories";
-import { getTags } from "@/lib/queries/tags";
+import { getSubcategories } from "@/lib/queries/subcategories";
 import { getAllProfilesForAdmin } from "@/lib/queries/authors";
 import { createClient } from "@/lib/supabase/server";
 import { PostForm } from "../post-form";
@@ -13,9 +13,9 @@ export const dynamic = "force-dynamic";
 
 export default async function NewPostPage() {
   const supabase = await createClient();
-  const [categories, tags, authors, { data: { user } }] = await Promise.all([
+  const [categories, subcategories, authors, { data: { user } }] = await Promise.all([
     getCategories(),
-    getTags(),
+    getSubcategories(),
     getAllProfilesForAdmin(),
     supabase.auth.getUser(),
   ]);
@@ -32,7 +32,7 @@ export default async function NewPostPage() {
       </div>
       <PostForm
         categories={categories}
-        tags={tags}
+        subcategories={subcategories}
         authors={authors}
         defaultAuthorId={user?.id}
         action={createPost}
