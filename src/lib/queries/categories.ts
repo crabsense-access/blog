@@ -12,6 +12,17 @@ export async function getCategories(): Promise<Category[]> {
   return data ?? [];
 }
 
+export async function getPublicCategories(): Promise<Category[]> {
+  const supabase = await createPublicClient();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getCategoryBySlug(slug: string): Promise<Category | null> {
   const supabase = await createPublicClient();
   const { data, error } = await supabase

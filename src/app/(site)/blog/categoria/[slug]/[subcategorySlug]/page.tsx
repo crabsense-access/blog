@@ -1,61 +1,67 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PostCard } from "@/components/site/post-card";
-import { Pagination } from "@/components/site/pagination";
+import { CategoryCard } from "@/components/site/category-card";
+import { CategoryPostsList } from "@/components/site/category-posts-list";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getSubcategoryWithCategory } from "@/lib/queries/subcategories";
-import { getPublishedPostsBySubcategory, POSTS_PER_PAGE } from "@/lib/queries/posts";
+import { loadMoreSubcategoryPosts } from "./actions";
+import {
+  getSubcategoryWithCategory,
+  getSubcategoriesByCategoryId,
+} from "@/lib/queries/subcategories";
+import { getPublishedPostsBySubcategoryRange } from "@/lib/queries/posts";
+import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 import { buildItemListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function SubcategoryPage({
   params,
-  searchParams,
 }: PageProps<"/blog/categoria/[slug]/[subcategorySlug]">) {
   const { slug: categorySlug, subcategorySlug } = await params;
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam ?? 1) || 1);
 
   const subcategory = await getSubcategoryWithCategory(categorySlug, subcategorySlug);
   if (!subcategory) notFound();
 
-  const { posts, count } = await getPublishedPostsBySubcategory(
+  const [categorySubcategories, siteSettings] = await Promise.all([
+    getSubcategoriesByCategoryId(subcategory.category_id),
+    getPublicSiteSettings(),
+  ]);
+
+  const initialCount = siteSettings.category_page_initial_items;
+  const { posts: initialPosts, count: totalCount } = await getPublishedPostsBySubcategoryRange(
     categorySlug,
     subcategorySlug,
-    page
+    0,
+    initialCount
   );
-  const totalPages = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
 
   return (
-    <div className="mx-auto max-w-5xl px-10 py-16">
-      <JsonLd data={buildItemListSchema(posts, page, POSTS_PER_PAGE)} />
-      <p className="text-sm font-medium text-muted-foreground">
-        <Link href={`/blog/categoria/${categorySlug}`} className="hover:underline">
-          {subcategory.category.name}
-        </Link>
-        <span className="mx-1.5">/</span>
-        Subcategoría
-      </p>
-      <h1 className="mb-8 text-3xl font-bold">{subcategory.name}</h1>
+    <div className="mx-auto max-w-[108rem] px-10 pb-16">
+      <JsonLd data={buildItemListSchema(initialPosts, 1, initialCount || 1)} />
 
-      {posts.length === 0 ? (
-        <p className="text-muted-foreground">No hay notas en esta subcategoría todavía.</p>
-      ) : (
-        <>
-          <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-          <Pagination
-            basePath={`/blog/categoria/${categorySlug}/${subcategorySlug}`}
-            page={page}
-            totalPages={totalPages}
+      <div className="flex gap-10 pt-12 pb-16">
+        <div
+          className="sticky h-fit w-[30vw] shrink-0"
+          style={{ top: "calc(var(--site-header-height, 4.5rem) + 5%)" }}
+        >
+          <CategoryCard
+            category={subcategory.category}
+            subcategories={categorySubcategories}
+            activeSubcategorySlug={subcategorySlug}
+            imageUrl={subcategory.image_url}
+            imageClassName="h-[25vh]"
+            subcategoryContainerClassName="bg-transparent"
+            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-400 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
           />
-        </>
-      )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <CategoryPostsList
+            initialPosts={initialPosts}
+            totalCount={totalCount}
+            loadMore={loadMoreSubcategoryPosts.bind(null, categorySlug, subcategorySlug)}
+          />
+        </div>
+      </div>
     </div>
   );
 }

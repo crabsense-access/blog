@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, SettingsIcon } from "lucide-react";
+import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/subcategories", label: "Subcategorías", icon: TagIcon },
   { href: "/admin/category-blocks", label: "Bloques de categoría", icon: LayoutGridIcon },
   { href: "/admin/authors", label: "Autores", icon: UsersIcon },
+  { href: "/admin/clients", label: "Clientes", icon: Building2Icon },
   { href: "/admin/settings", label: "Configuración", icon: SettingsIcon },
 ];
 

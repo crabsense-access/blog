@@ -12,7 +12,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-20 md:py-32">
         <div className="max-w-[108rem] mx-auto px-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            <h1 className="text-4xl md:text-6xl mb-6">
               Innovación y Transformación Digital
             </h1>
             <p className="text-xl md:text-2xl text-slate-300 mb-8">
@@ -36,7 +36,7 @@ export default function HomePage() {
       <section className="py-16 md:py-24">
         <div className="max-w-[108rem] mx-auto px-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Nuestros Valores</h2>
+            <h2 className="text-3xl md:text-4xl mb-4">Nuestros Valores</h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
               Nos guían en cada proyecto y decisión que tomamos
             </p>
@@ -76,7 +76,7 @@ export default function HomePage() {
       <section className="py-16 md:py-24 bg-slate-50">
         <div className="max-w-[108rem] mx-auto px-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Nuestros Servicios</h2>
+            <h2 className="text-3xl md:text-4xl mb-4">Nuestros Servicios</h2>
             <p className="text-slate-600 text-lg max-w-2xl mx-auto">
               Soluciones integrales para tu transformación digital
             </p>
@@ -115,7 +115,7 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="py-16 md:py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
         <div className="max-w-[108rem] mx-auto px-10 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          <h2 className="text-3xl md:text-4xl mb-6">
             ¿Listo para transformar tu negocio?
           </h2>
           <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">

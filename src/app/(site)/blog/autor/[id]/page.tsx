@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { FeaturedPostImage, FeaturedPostContent } from "@/components/site/featured-post-section";
-import { RelatedPostsSidebar } from "@/components/site/related-posts-sidebar";
+import { MainBlockFeaturedRow } from "@/components/site/main-block-featured-row";
 import { AuthorInfoCard } from "@/components/site/author-info-card";
 import { PostCardVerticalContent } from "@/components/site/post-card-vertical";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -28,17 +27,12 @@ export default async function AuthorPage({ params }: PageProps<"/blog/autor/[id]
       <JsonLd data={buildItemListSchema(moreArticles, 1, POSTS_PER_PAGE)} />
 
       {featuredPost ? (
-        <section className="w-full min-h-[calc(100vh-69px)] bg-gray-100 py-12">
-          <div className="grid grid-cols-2 gap-x-10 gap-y-4">
-            <FeaturedPostImage post={featuredPost} />
-            <AuthorInfoCard author={author} />
-            <FeaturedPostContent post={featuredPost} />
-            <RelatedPostsSidebar
-              relatedPosts={[secondPost, thirdPost].filter((p) => p !== undefined)}
-              alignTop={false}
-              showPromptDownload={false}
-            />
-          </div>
+        <section className="flex h-[calc(100vh-69px)] w-full flex-col overflow-hidden bg-gray-100 py-12">
+          <MainBlockFeaturedRow
+            featuredPost={featuredPost}
+            relatedPosts={[secondPost, thirdPost].filter((p) => p !== undefined)}
+            infoCard={<AuthorInfoCard author={author} className="h-auto shrink-0" />}
+          />
         </section>
       ) : (
         <div className="mb-16 max-w-md">
@@ -51,10 +45,10 @@ export default async function AuthorPage({ params }: PageProps<"/blog/autor/[id]
           <h2 className="mb-6 pl-2 text-2xl font-semibold uppercase">
             Más artículos de {author.full_name ?? "este autor"}
           </h2>
-          <div className="grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
             {moreArticles.map((post) => (
               <div key={post.id} className="pb-10">
-                <PostCardVerticalContent post={post} metaPosition="footer" />
+                <PostCardVerticalContent post={post} />
               </div>
             ))}
           </div>

@@ -6,6 +6,7 @@ import { PencilIcon, PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { slugify } from "@/lib/slugify";
+import { useSuccessToast } from "@/lib/use-success-toast";
+import { TagPill } from "@/components/site/tag-pill";
 import type { Category, Subcategory } from "@/lib/types";
 import {
   createSubcategory,
@@ -30,6 +33,7 @@ import {
 } from "./actions";
 
 const initialState: SubcategoryFormState = {};
+const DEFAULT_PILL_COLOR = "#6b7280";
 
 interface SubcategoryDialogProps {
   categories: Category[];
@@ -49,14 +53,11 @@ export function SubcategoryDialog({
   const [state, formAction, pending] = useActionState(action, initialState);
   const [slug, setSlug] = useState(subcategory?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(subcategory));
+  const [pillColor, setPillColor] = useState(subcategory?.pill_color ?? DEFAULT_PILL_COLOR);
+  const [name, setName] = useState(subcategory?.name ?? "");
+  const [preview, setPreview] = useState<string | null>(subcategory?.image_url ?? null);
 
-  const [prevState, setPrevState] = useState(state);
-  if (state !== prevState) {
-    setPrevState(state);
-    if (state !== initialState && !state.error && !state.fieldErrors) {
-      setOpen(false);
-    }
-  }
+  useSuccessToast(state, initialState, () => setOpen(false));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -84,8 +85,9 @@ export function SubcategoryDialog({
             <Input
               id="name"
               name="name"
-              defaultValue={subcategory?.name}
+              value={name}
               onChange={(e) => {
+                setName(e.target.value);
                 if (!slugTouched) setSlug(slugify(e.target.value));
               }}
               required
@@ -111,6 +113,15 @@ export function SubcategoryDialog({
             )}
           </div>
           <div className="grid gap-2">
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              name="description"
+              defaultValue={subcategory?.description ?? ""}
+              rows={2}
+            />
+          </div>
+          <div className="grid gap-2">
             <Label htmlFor="category_id">Categoría</Label>
             <Select
               name="category_id"
@@ -129,6 +140,49 @@ export function SubcategoryDialog({
             </Select>
             {state.fieldErrors?.category_id && (
               <p className="text-sm text-destructive">{state.fieldErrors.category_id[0]}</p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="image_file">Imagen de fondo</Label>
+            <Input
+              id="image_file"
+              name="image_file"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPreview(URL.createObjectURL(file));
+              }}
+            />
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview}
+                alt="Vista previa de la imagen"
+                className="h-24 w-full max-w-xs rounded object-cover"
+              />
+            )}
+            {state.fieldErrors?.image_file && (
+              <p className="text-sm text-destructive">{state.fieldErrors.image_file[0]}</p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="pill_color">Color del pill</Label>
+            <div className="flex items-center gap-3">
+              <input
+                id="pill_color"
+                name="pill_color"
+                type="color"
+                value={pillColor}
+                onChange={(e) => setPillColor(e.target.value)}
+                className="h-9 w-14 cursor-pointer rounded border"
+              />
+              <TagPill tone="category" color={pillColor}>
+                {name || "Ejemplo"}
+              </TagPill>
+            </div>
+            {state.fieldErrors?.pill_color && (
+              <p className="text-sm text-destructive">{state.fieldErrors.pill_color[0]}</p>
             )}
           </div>
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}

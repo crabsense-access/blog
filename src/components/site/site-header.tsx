@@ -25,6 +25,24 @@ export function SiteHeader() {
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
   const ticking = useRef(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Expone el alto real del header como variable CSS, para que otros
+  // bloques (ej. el slider de la home, que arranca en top: 0 por debajo
+  // del header) puedan compensarlo sin hardcodear un valor en px.
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    function setHeaderHeightVar() {
+      document.documentElement.style.setProperty("--site-header-height", `${el!.offsetHeight}px`);
+    }
+
+    setHeaderHeightVar();
+    const observer = new ResizeObserver(setHeaderHeightVar);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
@@ -54,6 +72,7 @@ export function SiteHeader() {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "border-b bg-white sticky top-0 z-50 transition-transform duration-300 ease-in-out",
         hidden ? "-translate-y-full" : "translate-y-0"

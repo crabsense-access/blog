@@ -1,38 +1,44 @@
-import type { ReactNode } from "react";
+import { Fragment } from "react";
 
-import { cn } from "@/lib/utils";
-import { PostCardDetailed } from "@/components/site/post-card-detailed";
+import { MainBlockHorizontalItem } from "@/components/site/main-block-horizontal-item";
 import { PromptDownloadBlock } from "@/components/site/prompt-download-block";
 import type { PostWithRelations } from "@/lib/types";
 
 interface RelatedPostsSidebarProps {
   relatedPosts: PostWithRelations[];
-  alignTop?: boolean;
+  itemHeight?: number | null;
+  showExcerpt?: boolean;
   showPromptDownload?: boolean;
-  leadingItem?: ReactNode;
+  activeSubcategorySlug?: string;
 }
 
 export function RelatedPostsSidebar({
   relatedPosts,
-  alignTop = true,
+  itemHeight,
+  showExcerpt = true,
   showPromptDownload = true,
-  leadingItem,
+  activeSubcategorySlug,
 }: RelatedPostsSidebarProps) {
   return (
-    <div className={cn("grid", alignTop && "self-start")}>
-      {leadingItem && <div className="px-3">{leadingItem}</div>}
+    <div className="mt-auto flex flex-col">
       {relatedPosts.map((post, index) => (
-        <div key={post.id}>
-          {(index > 0 || leadingItem) && <div className="my-5 border-t border-gray-200" />}
-          <div className="px-3">
-            <PostCardDetailed post={post} size="compact" showExcerpt={false} />
-          </div>
-        </div>
+        <Fragment key={post.id}>
+          {index > 0 && <div className="my-5 border-t border-gray-200" />}
+          <MainBlockHorizontalItem
+            post={post}
+            height={itemHeight}
+            activeSubcategorySlug={activeSubcategorySlug}
+            showExcerpt={showExcerpt}
+          />
+        </Fragment>
       ))}
       {showPromptDownload && (
-        <div className="mt-8 px-3">
-          <PromptDownloadBlock />
-        </div>
+        <>
+          {relatedPosts.length > 0 && <div className="my-5 border-t border-gray-200" />}
+          <div className="px-3">
+            <PromptDownloadBlock />
+          </div>
+        </>
       )}
     </div>
   );

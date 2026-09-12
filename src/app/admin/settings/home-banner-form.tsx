@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSuccessToast } from "@/lib/use-success-toast";
 import type { HomeBanner } from "@/lib/types";
 import { updateHomeBanner, type HomeBannerFormState } from "./actions";
 
@@ -12,6 +13,7 @@ const initialState: HomeBannerFormState = {};
 
 export function HomeBannerForm({ banner }: { banner: HomeBanner }) {
   const [state, formAction, pending] = useActionState(updateHomeBanner, initialState);
+  useSuccessToast(state, initialState);
 
   return (
     <form action={formAction} className="grid max-w-lg gap-6">

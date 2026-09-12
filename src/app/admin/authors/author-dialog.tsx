@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useSuccessToast } from "@/lib/use-success-toast";
 import type { Profile } from "@/lib/types";
 import { updateAuthorProfile, type AuthorFormState } from "./actions";
 
@@ -27,13 +28,7 @@ export function AuthorDialog({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(action, initialState);
   const [preview, setPreview] = useState<string | null>(profile.avatar_url);
 
-  const [prevState, setPrevState] = useState(state);
-  if (state !== prevState) {
-    setPrevState(state);
-    if (state !== initialState && !state.error && !state.fieldErrors) {
-      setOpen(false);
-    }
-  }
+  useSuccessToast(state, initialState, () => setOpen(false));
 
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

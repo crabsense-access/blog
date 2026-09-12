@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 
 import { getHomeBanner } from "@/lib/queries/home-banner";
+import { getSiteSettings } from "@/lib/queries/site-settings";
 import { createClient } from "@/lib/supabase/server";
 import { HomeBannerForm } from "./home-banner-form";
 import { ProfileForm } from "./profile-form";
+import { SiteSettingsForm } from "./site-settings-form";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +17,9 @@ export default async function SettingsPage() {
 
   if (!user) redirect("/login");
 
-  const [banner, { data: profile }] = await Promise.all([
+  const [banner, siteSettings, { data: profile }] = await Promise.all([
     getHomeBanner(),
+    getSiteSettings(),
     supabase.from("profiles").select("*").eq("id", user.id).single(),
   ]);
 
@@ -29,6 +32,16 @@ export default async function SettingsPage() {
         </p>
         <div className="mt-6">
           <HomeBannerForm banner={banner} />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold">General</h2>
+        <p className="text-sm text-muted-foreground">
+          Configuración global aplicada en todo el sitio público.
+        </p>
+        <div className="mt-6">
+          <SiteSettingsForm settings={siteSettings} />
         </div>
       </div>
 

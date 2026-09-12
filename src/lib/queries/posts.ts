@@ -14,11 +14,11 @@ export const POST_WITH_RELATIONS_SELECT = `
 // auxiliar que algunas queries agregan solo para filtrar; se descarta acá.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizePost(raw: any): PostWithRelations {
-  const { post_subcategories, subcategory_filter, ...rest } = raw;
+  const { subcategories, subcategory_filter, ...rest } = raw;
   return {
     ...rest,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subcategories: (post_subcategories ?? []).map((ps: any) => ps.subcategory).filter(Boolean),
+    subcategories: (subcategories ?? []).map((ps: any) => ps.subcategory).filter(Boolean),
   };
 }
 
@@ -98,6 +98,21 @@ export async function getPopularPosts(
   return (data ?? []).map(normalizePost);
 }
 
+export async function getSliderPosts(limit = 3): Promise<PostWithRelations[]> {
+  const supabase = await createPublicClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_WITH_RELATIONS_SELECT)
+    .eq("status", "published")
+    .eq("featured_in_slider", true)
+    .order("published_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return (data ?? []).map(normalizePost);
+}
+
 export async function getPublishedPosts(
   page = 1,
   excludeIds: string[] = []
@@ -147,11 +162,41 @@ export async function getPublishedPostsByCategory(
 
   const { data, error, count } = await supabase
     .from("posts")
-    .select(POST_WITH_RELATIONS_SELECT, { count: "exact" })
+    .select(
+      `*, category:categories!inner(*), subcategories:post_subcategories(subcategory:subcategories(*)), author:profiles(id, full_name, email, public_title, avatar_url, linkedin_url)`,
+      { count: "exact" }
+    )
     .eq("status", "published")
     .eq("category.slug", categorySlug)
     .order("published_at", { ascending: false })
     .range(from, to);
+
+  if (error) throw error;
+  return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };
+}
+
+// Variante de getPublishedPostsByCategory con offset/limit libres (en vez
+// de página fija de POSTS_PER_PAGE) — la usa la página de categoría para
+// el batch inicial (tamaño configurable desde /admin/settings) y el botón
+// "Ver más" (batches de a 5), ambos sobre el mismo listado ordenado por
+// fecha descendente.
+export async function getPublishedPostsByCategoryRange(
+  categorySlug: string,
+  offset: number,
+  limit: number
+): Promise<{ posts: PostWithRelations[]; count: number }> {
+  const supabase = await createPublicClient();
+
+  const { data, error, count } = await supabase
+    .from("posts")
+    .select(
+      `*, category:categories!inner(*), subcategories:post_subcategories(subcategory:subcategories(*)), author:profiles(id, full_name, email, public_title, avatar_url, linkedin_url)`,
+      { count: "exact" }
+    )
+    .eq("status", "published")
+    .eq("category.slug", categorySlug)
+    .order("published_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
   return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };
@@ -177,6 +222,32 @@ export async function getPublishedPostsBySubcategory(
     .eq("subcategory_filter.subcategory.category.slug", categorySlug)
     .order("published_at", { ascending: false })
     .range(from, to);
+
+  if (error) throw error;
+  return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };
+}
+
+// Variante de getPublishedPostsBySubcategory con offset/limit libres — ver
+// el comentario de getPublishedPostsByCategoryRange, misma idea.
+export async function getPublishedPostsBySubcategoryRange(
+  categorySlug: string,
+  subcategorySlug: string,
+  offset: number,
+  limit: number
+): Promise<{ posts: PostWithRelations[]; count: number }> {
+  const supabase = await createPublicClient();
+
+  const { data, error, count } = await supabase
+    .from("posts")
+    .select(
+      `${POST_WITH_RELATIONS_SELECT}, subcategory_filter:post_subcategories!inner(subcategory:subcategories!inner(slug, category:categories!inner(slug)))`,
+      { count: "exact" }
+    )
+    .eq("status", "published")
+    .eq("subcategory_filter.subcategory.slug", subcategorySlug)
+    .eq("subcategory_filter.subcategory.category.slug", categorySlug)
+    .order("published_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) throw error;
   return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };

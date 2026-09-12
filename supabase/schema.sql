@@ -74,12 +74,14 @@ create table if not exists public.categories (
   slug text not null unique,
   description text,
   pill_color text,
+  image_url text,
   parent_id uuid references public.categories (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
 -- Si la tabla ya existe, descomenta y ejecutá:
 -- alter table public.categories add column if not exists pill_color text;
+alter table public.categories add column if not exists image_url text;
 
 -- parent_id: null = "Categoría principal"; con valor = "categoría adicional"
 -- que cuelga de esa categoría principal (jerarquía de un solo nivel).
@@ -93,6 +95,7 @@ create table if not exists public.posts (
   title text not null,
   slug text not null unique,
   excerpt text,
+  quick_answer text,
   content text not null default '',
   cover_image_url text,
   status text not null default 'draft' check (status in ('draft', 'published')),
@@ -101,6 +104,11 @@ create table if not exists public.posts (
   published_at timestamptz,
   is_featured boolean not null default false,
   is_popular boolean not null default false,
+  featured_in_slider boolean not null default false,
+  meta_title text,
+  meta_description text,
+  canonical_url text,
+  faqs jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -108,10 +116,18 @@ create table if not exists public.posts (
 -- Si la tabla ya existe, descomenta y ejecuta las siguientes líneas:
 -- alter table public.posts add column if not exists is_featured boolean not null default false;
 -- alter table public.posts add column if not exists is_popular boolean not null default false;
+-- alter table public.posts add column if not exists featured_in_slider boolean not null default false;
+alter table public.posts add column if not exists meta_title text;
+alter table public.posts add column if not exists meta_description text;
+alter table public.posts add column if not exists canonical_url text;
+alter table public.posts add column if not exists quick_answer text;
+alter table public.posts add column if not exists faqs jsonb not null default '[]'::jsonb;
 
 create index if not exists posts_status_published_at_idx
   on public.posts (status, published_at desc);
 create index if not exists posts_category_id_idx on public.posts (category_id);
+create index if not exists posts_featured_in_slider_idx
+  on public.posts (featured_in_slider, published_at desc);
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -133,10 +149,14 @@ create table if not exists public.subcategories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text not null,
+  description text,
+  pill_color text,
+  image_url text,
   category_id uuid not null references public.categories (id) on delete cascade,
   created_at timestamptz not null default now(),
   unique (category_id, slug)
 );
+alter table public.subcategories add column if not exists image_url text;
 create index if not exists subcategories_category_id_idx on public.subcategories (category_id);
 
 -- ============ Relación posts <-> subcategorías (muchas a muchas) ============
@@ -186,6 +206,35 @@ create trigger home_banner_set_updated_at
   before update on public.home_banner
   for each row execute procedure public.set_updated_at();
 
+-- ============ Configuración general del sitio (fila única) ============
+create table if not exists public.site_settings (
+  id boolean primary key default true,
+  category_page_initial_items int not null default 10,
+  updated_at timestamptz not null default now(),
+  constraint site_settings_singleton check (id)
+);
+
+insert into public.site_settings (id) values (true) on conflict (id) do nothing;
+
+drop trigger if exists site_settings_set_updated_at on public.site_settings;
+create trigger site_settings_set_updated_at
+  before update on public.site_settings
+  for each row execute procedure public.set_updated_at();
+
+-- ============ Clientes (logos del carrusel de la home del blog) ============
+-- Nombrada "client_logos" y no "clients" para no colisionar con una tabla
+-- "clients" que ya pudiera existir en el proyecto para otro propósito
+-- (ej. CRM/contactos) — ver comentario en la migración correspondiente.
+create table if not exists public.client_logos (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  logo_url text not null,
+  row_number int not null default 1 check (row_number in (1, 2, 3)),
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists client_logos_row_number_idx on public.client_logos (row_number, sort_order);
+
 -- ============ Row Level Security ============
 alter table public.profiles enable row level security;
 alter table public.categories enable row level security;
@@ -194,6 +243,8 @@ alter table public.posts enable row level security;
 alter table public.post_subcategories enable row level security;
 alter table public.home_banner enable row level security;
 alter table public.category_blocks enable row level security;
+alter table public.client_logos enable row level security;
+alter table public.site_settings enable row level security;
 
 -- Lectura pública: cualquiera puede ver posts publicados, categorías y subcategorías.
 -- (drop + create en vez de "create policy if not exists" porque Postgres no
@@ -225,6 +276,14 @@ create policy "public read home_banner" on public.home_banner
 
 drop policy if exists "public read category_blocks" on public.category_blocks;
 create policy "public read category_blocks" on public.category_blocks
+  for select using (true);
+
+drop policy if exists "public read client_logos" on public.client_logos;
+create policy "public read client_logos" on public.client_logos
+  for select using (true);
+
+drop policy if exists "public read site_settings" on public.site_settings;
+create policy "public read site_settings" on public.site_settings
   for select using (true);
 
 -- Si la tabla ya existía con la policy anterior, descomenta y ejecutá:
@@ -267,6 +326,14 @@ drop policy if exists "authenticated manage category_blocks" on public.category_
 create policy "authenticated manage category_blocks" on public.category_blocks
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
+drop policy if exists "authenticated manage client_logos" on public.client_logos;
+create policy "authenticated manage client_logos" on public.client_logos
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop policy if exists "authenticated manage site_settings" on public.site_settings;
+create policy "authenticated manage site_settings" on public.site_settings
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
 -- ============ Primer usuario admin ============
 -- Después de registrarte una vez desde /login (o desde el dashboard de
 -- Supabase > Authentication > Users), promové tu usuario a admin:
@@ -293,3 +360,41 @@ create policy "authenticated manage category_blocks" on public.category_blocks
 -- el schema storage), hacelo manualmente desde Storage > New bucket en el
 -- dashboard: nombre "avatars", marcá "Public bucket", y en Policies agregá
 -- una de lectura pública y otra de escritura para usuarios autenticados.
+
+-- ============ Storage: bucket de logos de clientes ============
+-- Mismo patrón que el bucket "avatars" de arriba.
+--
+-- insert into storage.buckets (id, name, public)
+-- values ('client-logos', 'client-logos', true)
+-- on conflict (id) do nothing;
+--
+-- create policy "public read client-logos" on storage.objects
+--   for select using (bucket_id = 'client-logos');
+--
+-- create policy "authenticated manage client-logos" on storage.objects
+--   for all using (bucket_id = 'client-logos' and auth.uid() is not null)
+--   with check (bucket_id = 'client-logos' and auth.uid() is not null);
+--
+-- Si no tenés permisos para correr esto por SQL, creá el bucket a mano desde
+-- Storage > New bucket: nombre "client-logos", marcá "Public bucket", y en
+-- Policies agregá una de lectura pública y otra de escritura para
+-- usuarios autenticados.
+
+-- ============ Storage: bucket de imágenes de categorías/subcategorías ============
+-- Mismo patrón que el bucket "avatars" de arriba.
+--
+-- insert into storage.buckets (id, name, public)
+-- values ('category-images', 'category-images', true)
+-- on conflict (id) do nothing;
+--
+-- create policy "public read category-images" on storage.objects
+--   for select using (bucket_id = 'category-images');
+--
+-- create policy "authenticated manage category-images" on storage.objects
+--   for all using (bucket_id = 'category-images' and auth.uid() is not null)
+--   with check (bucket_id = 'category-images' and auth.uid() is not null);
+--
+-- Si no tenés permisos para correr esto por SQL, creá el bucket a mano desde
+-- Storage > New bucket: nombre "category-images", marcá "Public bucket", y
+-- en Policies agregá una de lectura pública y otra de escritura para
+-- usuarios autenticados.

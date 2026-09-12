@@ -1,15 +1,22 @@
 import { PostImage } from "@/components/site/post-image";
 import { LinkedinIcon } from "@/components/site/linkedin-icon";
+import { cn } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
-export function AuthorInfoCard({ author }: { author: Profile }) {
+export function AuthorInfoCard({
+  author,
+  className,
+}: {
+  author: Profile;
+  className?: string;
+}) {
   return (
-    <div className="flex h-full flex-col gap-4 rounded border border-gray-200 p-6">
+    <div className={cn("flex h-full flex-col gap-3 rounded border border-gray-200 p-4", className)}>
       <div className="flex items-center gap-4">
         <PostImage
           src={author.avatar_url}
           alt={author.full_name ?? "Autor"}
-          className="size-16 shrink-0 rounded-full"
+          className="size-14 shrink-0 rounded-full"
         />
         <div>
           <p className="text-lg font-bold">{author.full_name ?? "Autor"}</p>

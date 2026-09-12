@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { slugify } from "@/lib/slugify";
+import { useSuccessToast } from "@/lib/use-success-toast";
 import { TagPill } from "@/components/site/tag-pill";
 import type { Category } from "@/lib/types";
 import { createCategory, updateCategory, type CategoryFormState } from "./actions";
@@ -31,14 +32,9 @@ export function CategoryDialog({ category }: { category?: Category }) {
   const [slugTouched, setSlugTouched] = useState(Boolean(category));
   const [pillColor, setPillColor] = useState(category?.pill_color ?? DEFAULT_PILL_COLOR);
   const [name, setName] = useState(category?.name ?? "");
+  const [preview, setPreview] = useState<string | null>(category?.image_url ?? null);
 
-  const [prevState, setPrevState] = useState(state);
-  if (state !== prevState) {
-    setPrevState(state);
-    if (state !== initialState && !state.error && !state.fieldErrors) {
-      setOpen(false);
-    }
-  }
+  useSuccessToast(state, initialState, () => setOpen(false));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -99,6 +95,30 @@ export function CategoryDialog({ category }: { category?: Category }) {
               defaultValue={category?.description ?? ""}
               rows={2}
             />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="image_file">Imagen de fondo</Label>
+            <Input
+              id="image_file"
+              name="image_file"
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setPreview(URL.createObjectURL(file));
+              }}
+            />
+            {preview && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={preview}
+                alt="Vista previa de la imagen"
+                className="h-24 w-full max-w-xs rounded object-cover"
+              />
+            )}
+            {state.fieldErrors?.image_file && (
+              <p className="text-sm text-destructive">{state.fieldErrors.image_file[0]}</p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="pill_color">Color del pill</Label>

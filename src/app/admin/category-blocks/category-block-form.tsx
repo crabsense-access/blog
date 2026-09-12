@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useSuccessToast } from "@/lib/use-success-toast";
 import type { Category, CategoryBlockWithCategory } from "@/lib/types";
 import { updateCategoryBlock, type CategoryBlockFormState } from "./actions";
 
@@ -25,6 +26,7 @@ export function CategoryBlockForm({
 }) {
   const action = updateCategoryBlock.bind(null, block.position);
   const [state, formAction, pending] = useActionState(action, initialState);
+  useSuccessToast(state, initialState);
 
   return (
     <form action={formAction} className="grid max-w-lg gap-6">

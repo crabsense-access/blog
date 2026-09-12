@@ -10,11 +10,20 @@ function parseFormData(formData: FormData) {
   const subcategoryIds = formData.getAll("subcategory_ids").map(String);
   const isFeatured = formData.get("is_featured") === "on";
   const isPopular = formData.get("is_popular") === "on";
+  const featuredInSlider = formData.get("featured_in_slider") === "on";
+
+  let faqs: unknown = [];
+  try {
+    faqs = JSON.parse(String(formData.get("faqs") ?? "[]"));
+  } catch {
+    faqs = [];
+  }
 
   return postFormSchema.safeParse({
     title: formData.get("title"),
     slug: formData.get("slug"),
     excerpt: formData.get("excerpt") ?? "",
+    quick_answer: formData.get("quick_answer") ?? "",
     content: formData.get("content"),
     cover_image_url: formData.get("cover_image_url") ?? "",
     status: formData.get("status"),
@@ -22,7 +31,12 @@ function parseFormData(formData: FormData) {
     author_id: formData.get("author_id") ?? "",
     is_featured: isFeatured,
     is_popular: isPopular,
+    featured_in_slider: featuredInSlider,
     subcategory_ids: subcategoryIds,
+    meta_title: formData.get("meta_title") ?? "",
+    meta_description: formData.get("meta_description") ?? "",
+    canonical_url: formData.get("canonical_url") ?? "",
+    faqs,
   });
 }
 
@@ -78,8 +92,9 @@ export async function createPost(
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  revalidatePath(`/blog/${values.slug}`);
   revalidatePath("/");
-  redirect("/admin/posts");
+  redirect("/admin/posts?saved=1");
 }
 
 export async function updatePost(
@@ -98,7 +113,7 @@ export async function updatePost(
 
   const { data: current } = await supabase
     .from("posts")
-    .select("status, published_at")
+    .select("status, published_at, slug")
     .eq("id", id)
     .maybeSingle();
 
@@ -138,17 +153,36 @@ export async function updatePost(
   }
 
   revalidatePath("/admin/posts");
+  revalidatePath(`/admin/posts/${id}`);
   revalidatePath("/blog");
+  revalidatePath(`/blog/${values.slug}`);
+  if (current?.slug && current.slug !== values.slug) {
+    revalidatePath(`/blog/${current.slug}`);
+  }
   revalidatePath("/");
-  redirect("/admin/posts");
+  // A diferencia de createPost, acá no redirigimos: el pedido es quedarse
+  // en la misma página de edición después de guardar (para poder seguir
+  // editando sin volver a entrar desde la lista) — el toast de éxito lo
+  // dispara post-form.tsx vía useSuccessToast al ver este estado "{}".
+  return {};
 }
 
 export async function deletePost(id: string) {
   const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("posts")
+    .select("slug")
+    .eq("id", id)
+    .maybeSingle();
+
   const { error } = await supabase.from("posts").delete().eq("id", id);
 
   if (error) throw error;
 
   revalidatePath("/admin/posts");
   revalidatePath("/blog");
+  if (existing?.slug) {
+    revalidatePath(`/blog/${existing.slug}`);
+  }
+  revalidatePath("/");
 }

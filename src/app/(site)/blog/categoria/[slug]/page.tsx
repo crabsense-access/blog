@@ -1,50 +1,62 @@
 import { notFound } from "next/navigation";
 
-import { PostCard } from "@/components/site/post-card";
-import { Pagination } from "@/components/site/pagination";
+import { CategoryCard } from "@/components/site/category-card";
+import { CategoryPostsList } from "@/components/site/category-posts-list";
 import { JsonLd } from "@/components/seo/json-ld";
+import { loadMoreCategoryPosts } from "./actions";
 import { getCategoryBySlug } from "@/lib/queries/categories";
-import { getPublishedPostsByCategory, POSTS_PER_PAGE } from "@/lib/queries/posts";
+import { getSubcategoriesByCategoryId } from "@/lib/queries/subcategories";
+import { getPublishedPostsByCategoryRange } from "@/lib/queries/posts";
+import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 import { buildItemListSchema } from "@/lib/structured-data";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
-  searchParams,
 }: PageProps<"/blog/categoria/[slug]">) {
-  const { slug } = await params;
-  const { page: pageParam } = await searchParams;
-  const page = Math.max(1, Number(pageParam ?? 1) || 1);
+  const { slug: categorySlug } = await params;
 
-  const category = await getCategoryBySlug(slug);
+  const category = await getCategoryBySlug(categorySlug);
   if (!category) notFound();
 
-  const { posts, count } = await getPublishedPostsByCategory(slug, page);
-  const totalPages = Math.max(1, Math.ceil(count / POSTS_PER_PAGE));
+  const [subcategories, siteSettings] = await Promise.all([
+    getSubcategoriesByCategoryId(category.id),
+    getPublicSiteSettings(),
+  ]);
+
+  const initialCount = siteSettings.category_page_initial_items;
+  const { posts: initialPosts, count: totalCount } = await getPublishedPostsByCategoryRange(
+    categorySlug,
+    0,
+    initialCount
+  );
 
   return (
-    <div className="mx-auto max-w-5xl px-10 py-16">
-      <JsonLd data={buildItemListSchema(posts, page, POSTS_PER_PAGE)} />
-      <p className="text-sm font-medium text-muted-foreground">Categoría</p>
-      <h1 className="mb-8 text-3xl font-bold">{category.name}</h1>
+    <div className="mx-auto max-w-[108rem] px-10 pb-16">
+      <JsonLd data={buildItemListSchema(initialPosts, 1, initialCount || 1)} />
 
-      {posts.length === 0 ? (
-        <p className="text-muted-foreground">No hay notas en esta categoría todavía.</p>
-      ) : (
-        <>
-          <div className="mb-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
-          <Pagination
-            basePath={`/blog/categoria/${slug}`}
-            page={page}
-            totalPages={totalPages}
+      <div className="flex gap-10 pt-12 pb-16">
+        <div
+          className="sticky h-fit w-[30vw] shrink-0"
+          style={{ top: "calc(var(--site-header-height, 4.5rem) + 5%)" }}
+        >
+          <CategoryCard
+            category={category}
+            subcategories={subcategories}
+            imageClassName="h-[25vh]"
+            subcategoryContainerClassName="bg-transparent"
+            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-400 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
           />
-        </>
-      )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <CategoryPostsList
+            initialPosts={initialPosts}
+            totalCount={totalCount}
+            loadMore={loadMoreCategoryPosts.bind(null, category.slug)}
+          />
+        </div>
+      </div>
     </div>
   );
 }

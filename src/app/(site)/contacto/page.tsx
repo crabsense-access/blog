@@ -9,7 +9,7 @@ export default function ContactoPage() {
     <main className="min-h-screen bg-white">
       <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-20 md:py-28">
         <div className="max-w-[108rem] mx-auto px-10 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Contáctanos</h1>
+          <h1 className="text-4xl md:text-5xl mb-4">Contáctanos</h1>
           <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
             Contános sobre tu proyecto y te respondemos a la brevedad
           </p>

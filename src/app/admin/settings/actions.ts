@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { homeBannerFormSchema, profileFormSchema } from "@/lib/validations/post";
+import { homeBannerFormSchema, profileFormSchema, siteSettingsFormSchema } from "@/lib/validations/post";
 
 export interface HomeBannerFormState {
   error?: string;
@@ -78,5 +78,35 @@ export async function updateProfile(
   revalidatePath("/admin/settings");
   revalidatePath("/blog");
   revalidatePath("/");
+  return {};
+}
+
+export interface SiteSettingsFormState {
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+}
+
+export async function updateSiteSettings(
+  _prevState: SiteSettingsFormState,
+  formData: FormData
+): Promise<SiteSettingsFormState> {
+  const parsed = siteSettingsFormSchema.safeParse({
+    category_page_initial_items: formData.get("category_page_initial_items"),
+  });
+
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .update(parsed.data)
+    .eq("id", true);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/blog/categoria/[slug]", "page");
   return {};
 }

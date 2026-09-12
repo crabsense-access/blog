@@ -1,4 +1,4 @@
-import type { PostWithRelations } from "@/lib/types";
+import type { PostFaq, PostWithRelations } from "@/lib/types";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002";
 const SITE_LOGO = "https://crabsense.com/wp-content/uploads/2022/07/crabsense-logo.svg";
@@ -8,6 +8,7 @@ function publisherSchema() {
   return {
     "@type": "Organization",
     name: ORG_NAME,
+    url: SITE_URL,
     logo: {
       "@type": "ImageObject",
       url: SITE_LOGO,
@@ -18,11 +19,22 @@ function publisherSchema() {
 export function buildBlogPostingSchema(post: PostWithRelations) {
   const url = `${SITE_URL}/blog/${post.slug}`;
 
+  // "amerita" keywords solo si hay categoría y/o subcategorías cargadas.
+  const keywords = [post.category?.name, ...post.subcategories.map((sub) => sub.name)]
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
+
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    image: post.cover_image_url ?? undefined,
+    description: post.meta_description || post.excerpt || undefined,
+    image: post.cover_image_url
+      ? {
+          "@type": "ImageObject",
+          url: post.cover_image_url,
+        }
+      : undefined,
     datePublished: post.published_at ?? undefined,
     dateModified: post.updated_at ?? post.published_at ?? undefined,
     url,
@@ -34,11 +46,13 @@ export function buildBlogPostingSchema(post: PostWithRelations) {
       ? {
           "@type": "Person",
           name: post.author.full_name,
+          url: `${SITE_URL}/blog/autor/${post.author.id}`,
           ...(post.author.linkedin_url ? { sameAs: [post.author.linkedin_url] } : {}),
         }
       : undefined,
     publisher: publisherSchema(),
     articleSection: post.category?.name,
+    keywords: keywords || undefined,
   };
 }
 
@@ -49,6 +63,7 @@ export function buildBlogSchema(posts: PostWithRelations[], siteUrl: string = SI
     name: "Blog de Crabsense",
     description: "Análisis, guías y tendencias sobre Analytics, SEO, IA y marketing digital.",
     url: `${siteUrl}/blog`,
+    publisher: publisherSchema(),
     blogPost: posts.map((post) => ({
       "@type": "BlogPosting",
       headline: post.title,
@@ -56,6 +71,52 @@ export function buildBlogSchema(posts: PostWithRelations[], siteUrl: string = SI
       datePublished: post.published_at ?? undefined,
       image: post.cover_image_url ?? undefined,
     })),
+  };
+}
+
+export function buildPostBreadcrumbSchema(post: PostWithRelations, siteUrl: string = SITE_URL) {
+  const items: { name: string; item: string }[] = [
+    { name: "Inicio", item: siteUrl },
+    { name: "Blog", item: `${siteUrl}/blog` },
+  ];
+
+  if (post.category) {
+    items.push({
+      name: post.category.name,
+      item: `${siteUrl}/blog/categoria/${post.category.slug}`,
+    });
+
+    const subcategory = post.subcategories[0];
+    if (subcategory) {
+      items.push({
+        name: subcategory.name,
+        item: `${siteUrl}/blog/categoria/${post.category.slug}/${subcategory.slug}`,
+      });
+    }
+  }
+
+  items.push({ name: post.title, item: `${siteUrl}/blog/${post.slug}` });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: item.item,
+    })),
+  };
+}
+
+export function buildBlogBreadcrumbSchema(siteUrl: string = SITE_URL) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: siteUrl },
+      { "@type": "ListItem", position: 2, name: "Blog", item: `${siteUrl}/blog` },
+    ],
   };
 }
 
@@ -76,12 +137,30 @@ export function buildItemListSchema(
   };
 }
 
+export function buildFAQSchema(faqs: PostFaq[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
 export function buildOrganizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: ORG_NAME,
     url: SITE_URL,
-    logo: SITE_LOGO,
+    logo: {
+      "@type": "ImageObject",
+      url: SITE_LOGO,
+    },
   };
 }

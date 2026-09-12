@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { getAllPostsForAdmin } from "@/lib/queries/posts";
 import { DeletePostButton } from "./delete-post-button";
+import { SavedToast } from "./saved-toast";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export default async function AdminPostsPage() {
 
   return (
     <div className="grid gap-6">
+      <SavedToast />
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Notas</h1>
         <Button asChild>

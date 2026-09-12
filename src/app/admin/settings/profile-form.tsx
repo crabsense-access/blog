@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useSuccessToast } from "@/lib/use-success-toast";
 import type { Profile } from "@/lib/types";
 import { updateProfile, type ProfileFormState } from "./actions";
 
@@ -12,6 +13,7 @@ const initialState: ProfileFormState = {};
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [state, formAction, pending] = useActionState(updateProfile, initialState);
+  useSuccessToast(state, initialState);
 
   return (
     <form action={formAction} className="grid max-w-lg gap-6">
