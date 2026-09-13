@@ -21,7 +21,7 @@ import {
   buildFAQSchema,
   buildPostBreadcrumbSchema,
 } from "@/lib/structured-data";
-import { optimizeExternalImageUrl } from "@/lib/image-url";
+import { getResponsiveCoverImage } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -98,11 +98,16 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
 
   // Es el elemento LCP de la página: precargarlo con prioridad alta recorta
   // el delay entre HTML listo y arranque del fetch de la imagen (ver
-  // resourceLoadDelay en un audit de Lighthouse).
-  if (post.cover_image_url) {
-    preload(optimizeExternalImageUrl(post.cover_image_url), {
+  // resourceLoadDelay en un audit de Lighthouse). imageSrcSet/imageSizes
+  // hacen que el preload matchee el mismo recurso que el <img> real va a
+  // pedir (si no, el browser precarga un candidato que después no usa).
+  const coverImage = post.cover_image_url ? getResponsiveCoverImage(post.cover_image_url) : null;
+  if (coverImage) {
+    preload(coverImage.src, {
       as: "image",
       fetchPriority: "high",
+      imageSrcSet: coverImage.srcSet,
+      imageSizes: coverImage.sizes,
     });
   }
 
@@ -171,10 +176,12 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
         </div>
       )}
 
-      {post.cover_image_url && (
+      {coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={optimizeExternalImageUrl(post.cover_image_url)}
+          src={coverImage.src}
+          srcSet={coverImage.srcSet}
+          sizes={coverImage.sizes}
           alt={post.title}
           fetchPriority="high"
           decoding="async"
