@@ -28,7 +28,10 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
           return (
             <li key={index} className={cn("flex items-center", !isLast && "uppercase")}>
               {index > 0 && (
-                <span aria-hidden="true" className="mx-2.5 flex items-center text-lg leading-none">
+                <span
+                  aria-hidden="true"
+                  className="-mt-px mx-2.5 flex items-center text-lg leading-none"
+                >
                   ›
                 </span>
               )}
