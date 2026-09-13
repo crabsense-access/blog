@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { preload } from "react-dom";
 import type { Metadata } from "next";
 
 import { TagPill } from "@/components/site/tag-pill";
@@ -20,6 +21,7 @@ import {
   buildFAQSchema,
   buildPostBreadcrumbSchema,
 } from "@/lib/structured-data";
+import { optimizeExternalImageUrl } from "@/lib/image-url";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +96,16 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
   }
   breadcrumbItems.push({ label: post.title });
 
+  // Es el elemento LCP de la página: precargarlo con prioridad alta recorta
+  // el delay entre HTML listo y arranque del fetch de la imagen (ver
+  // resourceLoadDelay en un audit de Lighthouse).
+  if (post.cover_image_url) {
+    preload(optimizeExternalImageUrl(post.cover_image_url), {
+      as: "image",
+      fetchPriority: "high",
+    });
+  }
+
   return (
     <article className="mx-auto w-[95vw] px-10 py-16">
       <JsonLd data={buildBlogPostingSchema(post)} />
@@ -162,8 +174,10 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
       {post.cover_image_url && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={post.cover_image_url}
+          src={optimizeExternalImageUrl(post.cover_image_url)}
           alt={post.title}
+          fetchPriority="high"
+          decoding="async"
           className="mb-8 h-[42vh] w-full rounded-lg object-cover"
         />
       )}
