@@ -8,8 +8,9 @@ import { LinkedinIcon } from "@/components/site/linkedin-icon";
 import { MarkdownContent } from "@/components/site/markdown-content";
 import { TableOfContents } from "@/components/site/table-of-contents";
 import { Breadcrumb, type BreadcrumbItem } from "@/components/site/breadcrumb";
+import { RelatedPostsCarousel } from "@/components/site/related-posts-carousel";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getPostBySlug } from "@/lib/queries/posts";
+import { getPostBySlug, getRelatedPostsBySubcategories } from "@/lib/queries/posts";
 import {
   extractHeadings,
   insertFaqHeading,
@@ -95,6 +96,13 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
     }
   }
   breadcrumbItems.push({ label: post.title });
+
+  const relatedPosts = await getRelatedPostsBySubcategories(
+    post.subcategories.map((sub) => sub.id),
+    post.id,
+    10
+  );
+  const relatedPostsTitle = `Más artículos sobre: ${post.subcategories.map((sub) => sub.name).join(", ")}`;
 
   // Es el elemento LCP de la página: precargarlo con prioridad alta recorta
   // el delay entre HTML listo y arranque del fetch de la imagen (ver
@@ -252,6 +260,8 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
           )}
         </aside>
       </div>
+
+      <RelatedPostsCarousel title={relatedPostsTitle} posts={relatedPosts} className="mt-32" />
     </article>
   );
 }

@@ -253,6 +253,45 @@ export async function getPublishedPostsBySubcategoryRange(
   return { posts: (data ?? []).map(normalizePost), count: count ?? 0 };
 }
 
+// Posts que comparten al menos una subcategoría con `subcategoryIds`,
+// excluyendo `excludeId`, más recientes primero. El filtro usa un embed
+// !inner sobre post_subcategories (igual patrón que subcategory_filter en
+// getPublishedPostsBySubcategory) para poder usar .in() sobre varios ids a
+// la vez; como un post puede matchear más de una subcategoría del filtro,
+// PostgREST devuelve una fila por cada match — se deduplica acá.
+export async function getRelatedPostsBySubcategories(
+  subcategoryIds: string[],
+  excludeId: string,
+  limit = 10
+): Promise<PostWithRelations[]> {
+  if (subcategoryIds.length === 0) return [];
+
+  const supabase = await createPublicClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(
+      `${POST_WITH_RELATIONS_SELECT}, subcategory_filter:post_subcategories!inner(subcategory_id)`
+    )
+    .eq("status", "published")
+    .neq("id", excludeId)
+    .in("subcategory_filter.subcategory_id", subcategoryIds)
+    .order("published_at", { ascending: false });
+
+  if (error) throw error;
+
+  const seen = new Set<string>();
+  const posts: PostWithRelations[] = [];
+  for (const raw of data ?? []) {
+    const post = normalizePost(raw);
+    if (seen.has(post.id)) continue;
+    seen.add(post.id);
+    posts.push(post);
+    if (posts.length >= limit) break;
+  }
+  return posts;
+}
+
 // ---- Admin ----
 
 export async function getAllPostsForAdmin(): Promise<PostWithRelations[]> {
