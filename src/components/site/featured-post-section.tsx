@@ -60,7 +60,7 @@ export function FeaturedPostContent({
                 tone="subcategory"
                 href={`/blog/categoria/${category.slug}/${sub.slug}`}
                 className={cn(
-                  "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-400 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                  "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
                   active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                 )}
               >

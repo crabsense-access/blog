@@ -151,7 +151,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
                       ? `/blog/categoria/${post.category.slug}/${sub.slug}`
                       : undefined
                   }
-                  className="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-400 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
+                  className="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
                 >
                   {sub.name}
                 </TagPill>

@@ -38,7 +38,7 @@ export function TagPill({
               ? undefined
               : "bg-primary text-white hover:bg-primary/90"
             : tone === "subcategory"
-              ? "bg-gray-100 px-4 text-gray-600 hover:bg-gray-200"
+              ? "bg-gray-100 px-4 text-gray-700 hover:bg-gray-200"
               : tone === "action"
                 ? "bg-blue-600 text-white hover:bg-blue-700"
                 : "bg-neutral-200 text-muted-foreground hover:bg-muted-foreground hover:text-muted",

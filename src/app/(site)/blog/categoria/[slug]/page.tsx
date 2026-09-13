@@ -46,7 +46,7 @@ export default async function CategoryPage({
             subcategories={subcategories}
             imageClassName="h-[25vh]"
             subcategoryContainerClassName="bg-transparent"
-            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-400 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
+            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
           />
         </div>
         <div className="min-w-0 flex-1">
