@@ -41,7 +41,7 @@ export function ImageUploadField({
     if (!file) return;
 
     if (!ACCEPTED_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_IMAGE_TYPES)[number])) {
-      setClientError("Formato no soportado: subí un JPG, PNG o WebP.");
+      setClientError("Formato no soportado: subí un JPG, PNG, WebP o AVIF.");
       e.target.value = "";
       return;
     }
@@ -72,11 +72,11 @@ export function ImageUploadField({
         id={id}
         name={name}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/jpeg,image/png,image/webp,image/avif"
         required={required && !defaultImageUrl}
         onChange={handleChange}
       />
-      <p className="text-xs text-muted-foreground">JPG, PNG o WebP — máximo 5MB.</p>
+      <p className="text-xs text-muted-foreground">JPG, PNG, WebP o AVIF — máximo 5MB.</p>
       {displayedError && <p className="text-sm text-destructive">{displayedError}</p>}
     </div>
   );

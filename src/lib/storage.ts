@@ -2,18 +2,24 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/types";
 
-export const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+export const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+] as const;
 export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 const EXT_BY_MIME: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "image/avif": "avif",
 };
 
 export function validateImageFile(file: File): string | null {
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type as (typeof ACCEPTED_IMAGE_TYPES)[number])) {
-    return "Formato no soportado: subí un JPG, PNG o WebP.";
+    return "Formato no soportado: subí un JPG, PNG, WebP o AVIF.";
   }
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
     return "La imagen no puede pesar más de 5MB.";
