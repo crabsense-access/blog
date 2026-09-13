@@ -22,12 +22,16 @@ interface BreadcrumbProps {
 export function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
     <nav aria-label="Breadcrumb" className={cn("text-sm text-muted-foreground", className)}>
-      <ol className="flex flex-wrap items-center gap-1.5">
+      <ol className="flex flex-wrap items-center">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
-            <li key={index} className={cn("flex items-center gap-1.5", !isLast && "uppercase")}>
-              {index > 0 && <span aria-hidden="true">›</span>}
+            <li key={index} className={cn("flex items-center", !isLast && "uppercase")}>
+              {index > 0 && (
+                <span aria-hidden="true" className="mx-2.5 flex items-center text-lg leading-none">
+                  ›
+                </span>
+              )}
               {item.href && !isLast ? (
                 <Link href={item.href} className="hover:text-foreground hover:underline">
                   {item.label}
