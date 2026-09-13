@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { subcategoryFormSchema } from "@/lib/validations/post";
+import { uploadPublicImage } from "@/lib/storage";
 
 export interface SubcategoryFormState {
   error?: string;
@@ -20,26 +21,6 @@ function parse(formData: FormData) {
   });
 }
 
-async function uploadImage(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  imageFile: File
-) {
-  const ext = imageFile.name.split(".").pop() ?? "jpg";
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("category-images")
-    .upload(path, imageFile, { upsert: true });
-
-  if (uploadError) throw uploadError;
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("category-images").getPublicUrl(path);
-
-  return publicUrl;
-}
-
 export async function createSubcategory(
   _prevState: SubcategoryFormState,
   formData: FormData
@@ -53,7 +34,7 @@ export async function createSubcategory(
   const imageFile = formData.get("image_file");
   if (imageFile instanceof File && imageFile.size > 0) {
     try {
-      insertData.image_url = await uploadImage(supabase, imageFile);
+      insertData.image_url = await uploadPublicImage(supabase, "category-images", imageFile);
     } catch (e) {
       return { error: `No se pudo subir la imagen: ${(e as Error).message}` };
     }
@@ -82,7 +63,7 @@ export async function updateSubcategory(
   const imageFile = formData.get("image_file");
   if (imageFile instanceof File && imageFile.size > 0) {
     try {
-      updateData.image_url = await uploadImage(supabase, imageFile);
+      updateData.image_url = await uploadPublicImage(supabase, "category-images", imageFile);
     } catch (e) {
       return { error: `No se pudo subir la imagen: ${(e as Error).message}` };
     }

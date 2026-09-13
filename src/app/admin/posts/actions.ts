@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { postFormSchema } from "@/lib/validations/post";
+import { uploadPublicImage } from "@/lib/storage";
 
 function parseFormData(formData: FormData) {
   const subcategoryIds = formData.getAll("subcategory_ids").map(String);
@@ -25,7 +26,6 @@ function parseFormData(formData: FormData) {
     excerpt: formData.get("excerpt") ?? "",
     quick_answer: formData.get("quick_answer") ?? "",
     content: formData.get("content"),
-    cover_image_url: formData.get("cover_image_url") ?? "",
     status: formData.get("status"),
     category_id: formData.get("category_id"),
     author_id: formData.get("author_id") ?? "",
@@ -61,6 +61,16 @@ export async function createPost(
     data: { user },
   } = await supabase.auth.getUser();
 
+  let cover_image_url: string | undefined;
+  const coverImageFile = formData.get("cover_image_file");
+  if (coverImageFile instanceof File && coverImageFile.size > 0) {
+    try {
+      cover_image_url = await uploadPublicImage(supabase, "post-covers", coverImageFile);
+    } catch (e) {
+      return { error: `No se pudo subir la imagen de portada: ${(e as Error).message}` };
+    }
+  }
+
   // Si es_featured es true, poner is_featured=false en todos los demás posts
   if (is_featured) {
     await supabase
@@ -73,6 +83,7 @@ export async function createPost(
     .from("posts")
     .insert({
       ...values,
+      ...(cover_image_url ? { cover_image_url } : {}),
       author_id: author_id || user?.id || null,
       is_featured,
       published_at: values.status === "published" ? new Date().toISOString() : null,
@@ -122,6 +133,16 @@ export async function updatePost(
       ? (current?.published_at ?? new Date().toISOString())
       : null;
 
+  let cover_image_url: string | undefined;
+  const coverImageFile = formData.get("cover_image_file");
+  if (coverImageFile instanceof File && coverImageFile.size > 0) {
+    try {
+      cover_image_url = await uploadPublicImage(supabase, "post-covers", coverImageFile);
+    } catch (e) {
+      return { error: `No se pudo subir la imagen de portada: ${(e as Error).message}` };
+    }
+  }
+
   // Si es_featured es true, poner is_featured=false en todos los demás posts
   if (is_featured) {
     await supabase
@@ -135,6 +156,7 @@ export async function updatePost(
     .from("posts")
     .update({
       ...values,
+      ...(cover_image_url ? { cover_image_url } : {}),
       author_id: author_id || null,
       published_at,
       is_featured,

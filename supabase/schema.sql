@@ -398,3 +398,23 @@ create policy "authenticated manage site_settings" on public.site_settings
 -- Storage > New bucket: nombre "category-images", marcá "Public bucket", y
 -- en Policies agregá una de lectura pública y otra de escritura para
 -- usuarios autenticados.
+
+-- ============ Storage: bucket de portadas de posts ============
+-- Mismo patrón que el bucket "avatars" de arriba. Migración real en
+-- supabase/migrations/20260916000000_post_covers_and_avatars_storage.sql.
+--
+-- insert into storage.buckets (id, name, public)
+-- values ('post-covers', 'post-covers', true)
+-- on conflict (id) do nothing;
+--
+-- create policy "public read post-covers" on storage.objects
+--   for select using (bucket_id = 'post-covers');
+--
+-- create policy "authenticated manage post-covers" on storage.objects
+--   for all using (bucket_id = 'post-covers' and auth.uid() is not null)
+--   with check (bucket_id = 'post-covers' and auth.uid() is not null);
+--
+-- Si no tenés permisos para correr esto por SQL, creá el bucket a mano desde
+-- Storage > New bucket: nombre "post-covers", marcá "Public bucket", y en
+-- Policies agregá una de lectura pública y otra de escritura para usuarios
+-- autenticados.

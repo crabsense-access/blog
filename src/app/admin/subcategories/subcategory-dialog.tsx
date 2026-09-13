@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { slugify } from "@/lib/slugify";
 import { useSuccessToast } from "@/lib/use-success-toast";
 import { TagPill } from "@/components/site/tag-pill";
@@ -55,7 +56,6 @@ export function SubcategoryDialog({
   const [slugTouched, setSlugTouched] = useState(Boolean(subcategory));
   const [pillColor, setPillColor] = useState(subcategory?.pill_color ?? DEFAULT_PILL_COLOR);
   const [name, setName] = useState(subcategory?.name ?? "");
-  const [preview, setPreview] = useState<string | null>(subcategory?.image_url ?? null);
 
   useSuccessToast(state, initialState, () => setOpen(false));
 
@@ -142,30 +142,14 @@ export function SubcategoryDialog({
               <p className="text-sm text-destructive">{state.fieldErrors.category_id[0]}</p>
             )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="image_file">Imagen de fondo</Label>
-            <Input
-              id="image_file"
-              name="image_file"
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setPreview(URL.createObjectURL(file));
-              }}
-            />
-            {preview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={preview}
-                alt="Vista previa de la imagen"
-                className="h-24 w-full max-w-xs rounded object-cover"
-              />
-            )}
-            {state.fieldErrors?.image_file && (
-              <p className="text-sm text-destructive">{state.fieldErrors.image_file[0]}</p>
-            )}
-          </div>
+          <ImageUploadField
+            id="image_file"
+            name="image_file"
+            label="Imagen de fondo"
+            defaultImageUrl={subcategory?.image_url}
+            previewClassName="h-24"
+            error={state.fieldErrors?.image_file?.[0]}
+          />
           <div className="grid gap-2">
             <Label htmlFor="pill_color">Color del pill</Label>
             <div className="flex items-center gap-3">

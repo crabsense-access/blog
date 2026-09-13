@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { useSuccessToast } from "@/lib/use-success-toast";
 import type { Client } from "@/lib/types";
 import { createClientLogo, updateClientLogo, type ClientFormState } from "./actions";
@@ -35,7 +36,6 @@ export function ClientDialog({ client }: ClientDialogProps) {
   const [open, setOpen] = useState(false);
   const action = client ? updateClientLogo.bind(null, client.id) : createClientLogo;
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [preview, setPreview] = useState<string | null>(client?.logo_url ?? null);
 
   useSuccessToast(state, initialState, () => setOpen(false));
 
@@ -81,30 +81,15 @@ export function ClientDialog({ client }: ClientDialogProps) {
               <p className="text-sm text-destructive">{state.fieldErrors.row_number[0]}</p>
             )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="logo_file">Logo</Label>
-            <Input
-              id="logo_file"
-              name="logo_file"
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) setPreview(URL.createObjectURL(file));
-              }}
-            />
-            {preview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={preview}
-                alt="Vista previa del logo"
-                className="h-12 w-auto max-w-40 object-contain"
-              />
-            )}
-            {state.fieldErrors?.logo_file && (
-              <p className="text-sm text-destructive">{state.fieldErrors.logo_file[0]}</p>
-            )}
-          </div>
+          <ImageUploadField
+            id="logo_file"
+            name="logo_file"
+            label="Logo"
+            defaultImageUrl={client?.logo_url}
+            previewClassName="h-12 w-auto max-w-40 object-contain"
+            error={state.fieldErrors?.logo_file?.[0]}
+            required
+          />
           {state.error && <p className="text-sm text-destructive">{state.error}</p>}
           <DialogFooter>
             <Button type="submit" disabled={pending}>

@@ -14,7 +14,6 @@ export const postFormSchema = z.object({
   excerpt: z.string().max(300, "Máximo 300 caracteres.").optional().or(z.literal("")),
   quick_answer: z.string().optional().or(z.literal("")),
   content: z.string().min(1, "El contenido no puede estar vacío."),
-  cover_image_url: z.string().url("Tiene que ser una URL válida.").optional().or(z.literal("")),
   status: z.enum(["draft", "published"]),
   category_id: z.string().uuid("Elegí una categoría principal."),
   author_id: z.string().uuid().optional().or(z.literal("")),

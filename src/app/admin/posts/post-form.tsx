@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { slugify } from "@/lib/slugify";
 import { useSuccessToast } from "@/lib/use-success-toast";
 import { MarkdownContent } from "@/components/site/markdown-content";
@@ -193,15 +194,14 @@ export function PostForm({
         )}
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="cover_image_url">Imagen de portada (URL)</Label>
-        <Input
-          id="cover_image_url"
-          name="cover_image_url"
-          defaultValue={post?.cover_image_url ?? ""}
-          placeholder="https://..."
-        />
-      </div>
+      <ImageUploadField
+        id="cover_image_file"
+        name="cover_image_file"
+        label="Imagen de portada"
+        defaultImageUrl={post?.cover_image_url}
+        previewClassName="h-40"
+        error={state.fieldErrors?.cover_image_file?.[0]}
+      />
 
       <div className="grid gap-4 rounded-lg border p-4">
         <p className="text-sm font-semibold">SEO / LLMs</p>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { authorFormSchema } from "@/lib/validations/post";
+import { uploadPublicImage } from "@/lib/storage";
 
 export interface AuthorFormState {
   error?: string;
@@ -34,22 +35,11 @@ export async function updateAuthorProfile(
   const avatarFile = formData.get("avatar_file");
 
   if (avatarFile instanceof File && avatarFile.size > 0) {
-    const ext = avatarFile.name.split(".").pop() ?? "jpg";
-    const path = `${id}-${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("avatars")
-      .upload(path, avatarFile, { upsert: true });
-
-    if (uploadError) {
-      return { error: `No se pudo subir la imagen: ${uploadError.message}` };
+    try {
+      avatar_url = await uploadPublicImage(supabase, "avatars", avatarFile, id);
+    } catch (e) {
+      return { error: `No se pudo subir la imagen: ${(e as Error).message}` };
     }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("avatars").getPublicUrl(path);
-
-    avatar_url = publicUrl;
   }
 
   const { error } = await supabase

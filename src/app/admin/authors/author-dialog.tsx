@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, type ChangeEvent } from "react";
+import { useActionState, useState } from "react";
 import { PencilIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { useSuccessToast } from "@/lib/use-success-toast";
 import type { Profile } from "@/lib/types";
 import { updateAuthorProfile, type AuthorFormState } from "./actions";
@@ -26,14 +27,8 @@ export function AuthorDialog({ profile }: { profile: Profile }) {
   const [open, setOpen] = useState(false);
   const action = updateAuthorProfile.bind(null, profile.id);
   const [state, formAction, pending] = useActionState(action, initialState);
-  const [preview, setPreview] = useState<string | null>(profile.avatar_url);
 
   useSuccessToast(state, initialState, () => setOpen(false));
-
-  function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setPreview(URL.createObjectURL(file));
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -47,24 +42,13 @@ export function AuthorDialog({ profile }: { profile: Profile }) {
           <DialogTitle>Editar autor: {profile.full_name ?? profile.email}</DialogTitle>
         </DialogHeader>
         <form action={formAction} className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor={`avatar_file-${profile.id}`}>Foto</Label>
-            {preview && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={preview}
-                alt="Vista previa"
-                className="size-16 rounded-full object-cover"
-              />
-            )}
-            <Input
-              id={`avatar_file-${profile.id}`}
-              name="avatar_file"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-            />
-          </div>
+          <ImageUploadField
+            id={`avatar_file-${profile.id}`}
+            name="avatar_file"
+            label="Foto"
+            defaultImageUrl={profile.avatar_url}
+            previewClassName="size-16 rounded-full"
+          />
 
           <div className="grid gap-2">
             <Label htmlFor={`public_title-${profile.id}`}>Cargo público</Label>

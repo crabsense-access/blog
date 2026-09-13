@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 import { clientFormSchema } from "@/lib/validations/post";
+import { uploadPublicImage } from "@/lib/storage";
 
 export interface ClientFormState {
   error?: string;
@@ -15,26 +16,6 @@ function parse(formData: FormData) {
     name: formData.get("name"),
     row_number: formData.get("row_number"),
   });
-}
-
-async function uploadLogo(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  logoFile: File
-) {
-  const ext = logoFile.name.split(".").pop() ?? "png";
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("client-logos")
-    .upload(path, logoFile, { upsert: true });
-
-  if (uploadError) throw uploadError;
-
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("client-logos").getPublicUrl(path);
-
-  return publicUrl;
 }
 
 export async function createClientLogo(
@@ -53,7 +34,7 @@ export async function createClientLogo(
 
   let logo_url: string;
   try {
-    logo_url = await uploadLogo(supabase, logoFile);
+    logo_url = await uploadPublicImage(supabase, "client-logos", logoFile);
   } catch (e) {
     return { error: `No se pudo subir el logo: ${(e as Error).message}` };
   }
@@ -83,7 +64,7 @@ export async function updateClientLogo(
   const logoFile = formData.get("logo_file");
   if (logoFile instanceof File && logoFile.size > 0) {
     try {
-      updateData.logo_url = await uploadLogo(supabase, logoFile);
+      updateData.logo_url = await uploadPublicImage(supabase, "client-logos", logoFile);
     } catch (e) {
       return { error: `No se pudo subir el logo: ${(e as Error).message}` };
     }
