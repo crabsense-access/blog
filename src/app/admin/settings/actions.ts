@@ -92,21 +92,29 @@ export async function updateSiteSettings(
 ): Promise<SiteSettingsFormState> {
   const parsed = siteSettingsFormSchema.safeParse({
     category_page_initial_items: formData.get("category_page_initial_items"),
+    gtm_id: formData.get("gtm_id") ?? "",
   });
 
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
   }
 
+  const { category_page_initial_items, gtm_id } = parsed.data;
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")
-    .update(parsed.data)
+    .update({
+      category_page_initial_items,
+      gtm_id: gtm_id || null,
+    })
     .eq("id", true);
 
   if (error) return { error: error.message };
 
   revalidatePath("/admin/settings");
   revalidatePath("/blog/categoria/[slug]", "page");
+  // El GTM ID se lee en el layout raíz (todo el sitio, admin incluido), así
+  // que hace falta invalidar a nivel layout, no solo esta página.
+  revalidatePath("/", "layout");
   return {};
 }

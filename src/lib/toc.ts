@@ -92,6 +92,42 @@ export function splitContentAtSourcesHeading(markdown: string): {
   return { before: markdown, sources: null };
 }
 
+// Con menos H2 que esto no insertamos el bloque de nota relacionada — con
+// muy pocas secciones, "el H2 más cercano a la mitad" queda pegado al
+// principio o al final del contenido.
+const MIN_H2_FOR_MIDPOINT_INSERT = 3;
+
+/**
+ * Divide el Markdown del post en dos partes, cortando justo después del H2
+ * de nivel superior más cercano a la mitad del contenido (con 6 H2, después
+ * del 3°; con un n impar, se usa Math.ceil(n/2) — el H2 central). Se usa
+ * para insertar un bloque (ej. nota relacionada) entre dos secciones sin
+ * que quede pegado al principio o al final. Devuelve `null` si el contenido
+ * no tiene suficientes H2 (< 3).
+ */
+export function splitContentAtMidpointHeading(
+  markdown: string
+): { before: string; after: string } | null {
+  const tree = unified().use(remarkParse).use(remarkGfm).parse(markdown) as Root;
+  const h2Offsets: number[] = [];
+
+  for (const node of tree.children) {
+    if (node.type === "heading" && node.depth === 2 && typeof node.position?.start.offset === "number") {
+      h2Offsets.push(node.position.start.offset);
+    }
+  }
+
+  if (h2Offsets.length < MIN_H2_FOR_MIDPOINT_INSERT) return null;
+
+  const splitIndex = Math.ceil(h2Offsets.length / 2);
+  const boundaryOffset = h2Offsets[splitIndex];
+
+  return {
+    before: markdown.slice(0, boundaryOffset).trimEnd(),
+    after: markdown.slice(boundaryOffset),
+  };
+}
+
 /**
  * Inserta la entrada "Preguntas frecuentes" en el TOC, en el mismo lugar en
  * el que el bloque de FAQ se renderiza en la página: justo antes de

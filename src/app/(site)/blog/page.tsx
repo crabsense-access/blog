@@ -1,7 +1,5 @@
 import { HomeHeroSlider } from '@/components/site/home-hero-slider';
-import { ScrollTextReveal } from '@/components/site/scroll-text-reveal';
-import { ClientLogosCarousel } from '@/components/site/client-logos-carousel';
-import { CategoriesSection } from '@/components/site/categories-section';
+import { PostCategoriesStickyNav } from '@/components/site/post-categories-sticky-nav';
 import { HomeFeaturedRow } from '@/components/site/home-featured-row';
 import { PopularPostsCarousel } from '@/components/site/popular-posts-carousel';
 import { CategoryCarouselRow } from '@/components/site/category-carousel-row';
@@ -17,20 +15,18 @@ import { getCategoryBlocks, getPostsByCategoryId } from '@/lib/queries/category-
 import { getPublicCategories } from '@/lib/queries/categories';
 import { getSubcategoriesByCategoryId } from '@/lib/queries/subcategories';
 import { getFeaturedExperts } from '@/lib/queries/authors';
-import { getPublicClients } from '@/lib/queries/clients';
 import { buildBlogSchema, buildBlogBreadcrumbSchema } from '@/lib/structured-data';
 
 export const dynamic = 'force-dynamic';
 
 export default async function BlogIndexPage() {
-  const [featuredPost, categoryBlocks, experts, sliderPosts, allCategories, clients] =
+  const [featuredPost, categoryBlocks, experts, sliderPosts, allCategories] =
     await Promise.all([
       getFeaturedPost(),
       getCategoryBlocks(),
       getFeaturedExperts(),
       getSliderPosts(3),
       getPublicCategories(),
-      getPublicClients(),
     ]);
 
   const categoriesWithSubcategories = await Promise.all(
@@ -78,11 +74,37 @@ export default async function BlogIndexPage() {
       <div className="max-w-[108rem] mx-auto px-10 pb-12">
         {sliderPosts.length > 0 && <HomeHeroSlider posts={sliderPosts} />}
 
-        <CategoriesSection categories={categoriesWithSubcategories} />
+        {/* Menú sticky de categorías y subcategorías, el mismo que en
+            la página de post (post-categories-sticky-nav.tsx), en vez de
+            las 4 cards de categoría que había antes acá. Sin
+            currentCategoryId (no hay un post "actual" en la home, así
+            que abre la primera categoría de la lista) y sin la barra de
+            progreso de lectura (showReadingProgress=false: acá no hay
+            una sola nota cuyo progreso mostrar).
 
-        <ScrollTextReveal />
-
-        <ClientLogosCarousel clients={clients} />
+            Acá en la home el <nav> va genuinamente al 100% de la pantalla,
+            igual que <header> (que tampoco tiene ancho propio: ver
+            site-header.tsx) -- className le pasa DIRECTO al <nav> el
+            mismo truco de "full-bleed" que ya se usa en otros bloques del
+            sitio (ver client-logos-carousel.tsx), sacándolo del
+            contenedor centrado/paddeado de esta página. A propósito NO va
+            en un <div> wrapper aparte alrededor de este componente: ese
+            wrapper quedaría tan alto como el propio nav (nada más
+            adentro) y position:sticky necesita que su contenedor tenga
+            más alto que el elemento pegajoso para poder quedarse pegado
+            al scrollear -- puesto directo en el <nav>, su padre real
+            sigue siendo este div de arriba (con todo el resto de la
+            home adentro), así el sticky tiene todo el margen que
+            necesita. contentClassName repite el mismo max-w-[108rem]
+            mx-auto px-10 que <header> usa para su propio contenido, así
+            las pills quedan alineadas con el logo/links de arriba en vez
+            de solo evitar que toquen el borde. */}
+        <PostCategoriesStickyNav
+          categories={categoriesWithSubcategories}
+          showReadingProgress={false}
+          className="w-screen ml-[calc(50%-50vw)]"
+          contentClassName="max-w-[108rem] mx-auto px-10"
+        />
 
         {/* Bloque Principal */}
         {featuredPost && (

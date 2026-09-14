@@ -3,18 +3,26 @@ import { preload } from "react-dom";
 import type { Metadata } from "next";
 
 import { TagPill } from "@/components/site/tag-pill";
+import { PostCategoriesStickyNav } from "@/components/site/post-categories-sticky-nav";
 import { AuthorAvatar } from "@/components/site/author-avatar";
 import { LinkedinIcon } from "@/components/site/linkedin-icon";
 import { MarkdownContent } from "@/components/site/markdown-content";
 import { TableOfContents } from "@/components/site/table-of-contents";
 import { Breadcrumb, type BreadcrumbItem } from "@/components/site/breadcrumb";
 import { RelatedPostsCarousel } from "@/components/site/related-posts-carousel";
+import { RelatedNoteBlock } from "@/components/site/related-note-block";
+import { FaqSection } from "@/components/site/faq-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getPostBySlug, getRelatedPostsBySubcategories } from "@/lib/queries/posts";
+import { getPublicCategories } from "@/lib/queries/categories";
+import { getSubcategoriesByCategoryId } from "@/lib/queries/subcategories";
+import { getAllPublishedGlossaryTermsLight } from "@/lib/queries/glossary";
+import { createGlossaryLinker } from "@/lib/glossary-linking";
 import {
   extractHeadings,
   insertFaqHeading,
   splitContentAtSourcesHeading,
+  splitContentAtMidpointHeading,
   FAQ_SECTION_ID,
 } from "@/lib/toc";
 import {
@@ -64,6 +72,18 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
 
   if (!post || post.status !== "published") notFound();
 
+  // Todas las categorías + sus subcategorías, para el menú sticky de
+  // navegación (PostCategoriesStickyNav) — es independiente de la
+  // categoría/subcategorías propias de ESTE post (que se siguen mostrando
+  // aparte, arriba del título).
+  const allCategories = await getPublicCategories();
+  const categoriesWithSubcategories = await Promise.all(
+    allCategories.map(async (category) => ({
+      category,
+      subcategories: await getSubcategoriesByCategoryId(category.id),
+    }))
+  );
+
   // Defensivo: si la migración de faqs todavía no corrió, la columna no
   // existe y esta propiedad viene undefined — no debe romper la página.
   const faqs = post.faqs ?? [];
@@ -73,10 +93,27 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
     new Date(post.updated_at).getTime() - new Date(post.published_at).getTime() >
       FRESHNESS_BUFFER_MS;
 
-  const headings = insertFaqHeading(extractHeadings(post.content), faqs.length > 0);
+  // Un único linker por post: el estado de "qué término ya se enlazó" se
+  // comparte entre la respuesta rápida, el contenido y las FAQs (en ese
+  // orden de lectura) para que solo la primerísima mención de cada término
+  // en toda la página quede enlazada, sin importar en qué bloque aparezca.
+  const glossaryTerms = await getAllPublishedGlossaryTermsLight();
+  const glossaryLinker = createGlossaryLinker(glossaryTerms, [
+    post.quick_answer ?? "",
+    post.content,
+    ...faqs.map((faq) => faq.answer),
+  ]);
+  const linkedQuickAnswer = post.quick_answer?.trim()
+    ? glossaryLinker.link(post.quick_answer)
+    : null;
+  const linkedContent = glossaryLinker.link(post.content);
+  const linkedFaqs = faqs.map((faq) => ({ ...faq, answer: glossaryLinker.link(faq.answer) }));
+
+  const headings = insertFaqHeading(extractHeadings(linkedContent), faqs.length > 0);
   const { before: contentBeforeSources, sources: sourcesContent } = splitContentAtSourcesHeading(
-    post.content
+    linkedContent
   );
+  const midpointSplit = splitContentAtMidpointHeading(contentBeforeSources);
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: "Inicio", href: "/" },
@@ -104,6 +141,10 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
   );
   const relatedPostsTitle = `Más artículos sobre: ${post.subcategories.map((sub) => sub.name).join(", ")}`;
 
+  // Evita repetir, si es posible, el mismo post que ya aparece primero en
+  // el carrusel de "Más artículos sobre" del final de la página.
+  const inlineRelatedPost = relatedPosts.length > 1 ? relatedPosts[1] : (relatedPosts[0] ?? null);
+
   // Es el elemento LCP de la página: precargarlo con prioridad alta recorta
   // el delay entre HTML listo y arranque del fetch de la imagen (ver
   // resourceLoadDelay en un audit de Lighthouse). imageSrcSet/imageSizes
@@ -120,7 +161,28 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
   }
 
   return (
-    <article className="mx-auto w-[95vw] px-10 py-16">
+    <>
+      {/* PostCategoriesStickyNav ya no trae su propio ancho/padding (ver
+          comentario en el componente) -- este wrapper (mismo w-[95vw]
+          px-10 que antes tenía el <article> solo, ahora movido acá para
+          que envuelva a los dos) es lo que angosta su fondo/borde para que
+          quede alineado con el contenido de la nota, en vez de pegado a
+          los 100vw de la pantalla.
+          OJO: tiene que envolver nav + article JUNTOS, no un <div> aparte
+          sólo para el nav -- un wrapper que mide únicamente la altura del
+          propio nav no le deja "margen" para quedar sticky (position:
+          sticky necesita que su contenedor sea más alto que el elemento
+          para poder pegarse mientras se scrollea el resto adentro); eso
+          fue justamente el bug que rompió el sticky en esta página. Al
+          envolver también el <article> (que es toda la nota), el
+          contenedor es tan alto como toda la página y el nav tiene de
+          sobra dónde quedar pegado. */}
+      <div className="mx-auto w-[95vw] px-10">
+        <PostCategoriesStickyNav
+          categories={categoriesWithSubcategories}
+          currentCategoryId={post.category?.id ?? null}
+        />
+        <article className="py-16">
       <JsonLd data={buildBlogPostingSchema(post)} />
       <JsonLd data={buildPostBreadcrumbSchema(post)} />
       {faqs.length > 0 && <JsonLd data={buildFAQSchema(faqs)} />}
@@ -197,35 +259,27 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
         />
       )}
 
-      <div className="grid grid-cols-[25%_47%_28%] gap-x-16">
+      <div className="grid grid-cols-[25fr_47fr_28fr] gap-x-16">
         <aside>
           <TableOfContents headings={headings} />
         </aside>
 
         <div>
-          {post.quick_answer?.trim() && (
-            <MarkdownContent content={post.quick_answer} className="prose-lg mb-8" />
+          {linkedQuickAnswer && (
+            <MarkdownContent content={linkedQuickAnswer} className="prose-lg mb-8" />
           )}
 
-          <MarkdownContent content={contentBeforeSources} className="post-content" />
-
-          {faqs.length > 0 && (
-            <div className="prose post-content mt-12 mb-20 max-w-none">
-              <h2 id={FAQ_SECTION_ID}>Preguntas frecuentes</h2>
-              {/* not-prose: las cards se manejan con clases propias, sin
-                  pelear con los márgenes/tamaños que el plugin de
-                  typography le pondría a los h3/p acá adentro. */}
-              <div className="not-prose mt-6 space-y-4">
-                {faqs.map((faq, index) => (
-                  <div key={index} className="rounded-2xl bg-muted p-6 sm:p-8">
-                    {/* Más chico que el h2 "Preguntas frecuentes". */}
-                    <h3 className="mb-2 text-xl font-normal lg:text-2xl">{faq.question}</h3>
-                    <MarkdownContent content={faq.answer} />
-                  </div>
-                ))}
-              </div>
-            </div>
+          {midpointSplit && inlineRelatedPost ? (
+            <>
+              <MarkdownContent content={midpointSplit.before} className="post-content" />
+              <RelatedNoteBlock post={inlineRelatedPost} />
+              <MarkdownContent content={midpointSplit.after} className="post-content" />
+            </>
+          ) : (
+            <MarkdownContent content={contentBeforeSources} className="post-content" />
           )}
+
+          <FaqSection faqs={linkedFaqs} id={FAQ_SECTION_ID} />
 
           {sourcesContent && <MarkdownContent content={sourcesContent} className="sources-content" />}
         </div>
@@ -261,7 +315,9 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
         </aside>
       </div>
 
-      <RelatedPostsCarousel title={relatedPostsTitle} posts={relatedPosts} className="mt-32" />
-    </article>
+        <RelatedPostsCarousel title={relatedPostsTitle} posts={relatedPosts} className="mt-32" />
+        </article>
+      </div>
+    </>
   );
 }

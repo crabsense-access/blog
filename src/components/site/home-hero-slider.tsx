@@ -225,7 +225,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
     >
       <div
         ref={stageRef}
-        className="relative h-[70vh] w-full touch-pan-y select-none overflow-hidden rounded-2xl bg-gray-900"
+        className="relative h-[70vh] w-full touch-pan-y select-none overflow-hidden rounded-2xl"
       >
         {posts.map((post, i) => {
           const distance = Math.abs(progress - i);

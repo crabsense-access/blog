@@ -216,6 +216,10 @@ create table if not exists public.site_settings (
 
 insert into public.site_settings (id) values (true) on conflict (id) do nothing;
 
+-- ID de Google Tag Manager, configurable desde /admin/settings. Migración
+-- real en supabase/migrations/20260918000000_site_settings_gtm_id.sql.
+alter table public.site_settings add column if not exists gtm_id text;
+
 drop trigger if exists site_settings_set_updated_at on public.site_settings;
 create trigger site_settings_set_updated_at
   before update on public.site_settings

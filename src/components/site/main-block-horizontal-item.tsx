@@ -13,6 +13,8 @@ interface MainBlockHorizontalItemProps {
   flexShare?: boolean;
   activeSubcategorySlug?: string;
   showExcerpt?: boolean;
+  showPills?: boolean;
+  showAuthorMeta?: boolean;
   // Overrides opcionales de tamaño — sin usarlos, el item se ve igual que
   // en el Bloque Principal de la home. Las páginas de categoría/
   // subcategoría los usan para agrandar apenas el título y el bloque de
@@ -45,6 +47,8 @@ export function MainBlockHorizontalItem({
   flexShare = false,
   activeSubcategorySlug,
   showExcerpt = true,
+  showPills = true,
+  showAuthorMeta = true,
   titleClassName,
   authorNameClassName,
   metaClassName,
@@ -81,28 +85,26 @@ export function MainBlockHorizontalItem({
         />
 
         <div className="row-start-1 flex min-w-0 flex-col justify-start gap-4">
-          <div className="mt-2 flex min-h-7 flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {category && (
-              <>
-                <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className="mr-[2%] px-4 py-1 text-base">
-                  {category.name}
+          {showPills && category && (
+            <div className="mt-2 flex min-h-7 flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className="mr-[2%] px-4 py-1 text-base">
+                {category.name}
+              </TagPill>
+              {orderedSubcategories.map(({ subcategory: sub, active }) => (
+                <TagPill
+                  key={sub.id}
+                  tone="subcategory"
+                  href={`/blog/categoria/${category.slug}/${sub.slug}`}
+                  className={cn(
+                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                    active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
+                  )}
+                >
+                  {sub.name}
                 </TagPill>
-                {orderedSubcategories.map(({ subcategory: sub, active }) => (
-                  <TagPill
-                    key={sub.id}
-                    tone="subcategory"
-                    href={`/blog/categoria/${category.slug}/${sub.slug}`}
-                    className={cn(
-                      "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
-                      active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
-                    )}
-                  >
-                    {sub.name}
-                  </TagPill>
-                ))}
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           <Link href={`/blog/${post.slug}`} className="hover:underline">
             {/* Mismo font-family/weight que el h2 del destacado
@@ -126,40 +128,42 @@ export function MainBlockHorizontalItem({
             <p className="font-excerpt line-clamp-2 text-lg text-muted-foreground">{post.excerpt}</p>
           )}
 
-          <div className="flex items-end justify-between gap-2 pt-4">
-            {authorLabel ? (
-              <div className="flex items-center gap-2">
-                <AuthorAvatar author={post.author ?? {}} />
-                <div className="flex flex-col leading-tight">
-                  <Link
-                    href={`/blog/autor/${post.author?.id}`}
-                    className={cn(
-                      "text-sm font-medium text-foreground hover:underline",
-                      authorNameClassName
+          {showAuthorMeta && (
+            <div className="flex items-end justify-between gap-2 pt-4">
+              {authorLabel ? (
+                <div className="flex items-center gap-2">
+                  <AuthorAvatar author={post.author ?? {}} />
+                  <div className="flex flex-col leading-tight">
+                    <Link
+                      href={`/blog/autor/${post.author?.id}`}
+                      className={cn(
+                        "text-sm font-medium text-foreground hover:underline",
+                        authorNameClassName
+                      )}
+                    >
+                      {authorLabel}
+                    </Link>
+                    {post.author?.public_title && (
+                      <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
+                        {post.author.public_title}
+                      </span>
                     )}
-                  >
-                    {authorLabel}
-                  </Link>
-                  {post.author?.public_title && (
-                    <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
-                      {post.author.public_title}
-                    </span>
-                  )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div />
-            )}
-            {post.published_at && (
-              <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
-                {new Date(post.published_at).toLocaleDateString("es-AR", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            )}
-          </div>
+              ) : (
+                <div />
+              )}
+              {post.published_at && (
+                <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
+                  {new Date(post.published_at).toLocaleDateString("es-AR", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

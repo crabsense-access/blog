@@ -15,6 +15,7 @@ import {
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/blog", label: "Blog" },
+  { href: "/glosario", label: "Glosario" },
 ];
 
 // Umbral en px antes de permitir que el header se esconda,
@@ -43,6 +44,22 @@ export function SiteHeader() {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Expone además el "offset" que le corresponde a cualquier bloque sticky
+  // que vaya pegado justo debajo del header (ej. PostCategoriesStickyNav):
+  // la altura del header mientras está visible, y 0 en el mismo instante
+  // en que el header se esconde (translateY -100% al scrollear hacia
+  // abajo) — así ese otro bloque puede subir a top:0 y ocupar el lugar del
+  // header en vez de dejar un hueco en blanco, y volver a su lugar justo
+  // debajo apenas el header reaparece. Al ser un valor "var(...)" en vez
+  // de un px fijo, sigue reflejando la altura real del header (la que
+  // actualiza el ResizeObserver de arriba) aun mientras está visible.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--site-header-offset",
+      hidden ? "0px" : "var(--site-header-height, 4.5rem)"
+    );
+  }, [hidden]);
 
   useEffect(() => {
     lastScrollY.current = window.scrollY;
@@ -81,8 +98,9 @@ export function SiteHeader() {
       <div className="max-w-[108rem] mx-auto px-10">
         <div className="flex max-w-7xl mx-auto items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-slate-900 hover:text-blue-600 transition-colors">
-            Crabsense
+          <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
+            {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos, ver post-image.tsx */}
+            <img src="/crabsense-logo.svg" alt="Crabsense" className="h-9 w-auto" />
           </Link>
 
           {/* Navigation */}

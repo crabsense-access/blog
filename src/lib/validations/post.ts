@@ -101,6 +101,16 @@ export type ClientFormValues = z.infer<typeof clientFormSchema>;
 
 export const siteSettingsFormSchema = z.object({
   category_page_initial_items: z.coerce.number().int().min(1).max(50),
+  // Vacío = sin GTM instalado (el layout raíz no inyecta el script). Se
+  // valida el formato típico "GTM-XXXXXXX" para evitar cargar un ID mal
+  // tipeado, pero no se fuerza el campo a ser obligatorio.
+  gtm_id: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^GTM-[A-Z0-9]+$/i.test(value), {
+      message: 'Formato inválido. Tiene que ser del tipo "GTM-XXXXXXX".',
+    }),
 });
 
 export type SiteSettingsFormValues = z.infer<typeof siteSettingsFormSchema>;

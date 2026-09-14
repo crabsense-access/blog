@@ -41,6 +41,11 @@ export async function getPublicSiteSettings(): Promise<SiteSettings> {
       details,
       hint,
     });
-    return { id: true, category_page_initial_items: 10, updated_at: new Date().toISOString() };
+    return {
+      id: true,
+      category_page_initial_items: 10,
+      gtm_id: null,
+      updated_at: new Date().toISOString(),
+    };
   }
 }

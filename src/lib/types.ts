@@ -103,5 +103,53 @@ export interface Client {
 export interface SiteSettings {
   id: true;
   category_page_initial_items: number;
+  // ID de Google Tag Manager (ej. "GTM-XXXXXXX"), configurable desde
+  // /admin/settings. null mientras no se cargue ninguno.
+  gtm_id: string | null;
   updated_at: string;
+}
+
+export type GlossaryCategory = "ga4" | "ads" | "ia" | "seo";
+
+export interface GlossaryFormulaComponent {
+  label: string;
+  symbol?: string;
+}
+
+export interface GlossaryFormula {
+  expression: string;
+  components: GlossaryFormulaComponent[];
+}
+
+export interface GlossaryComparisonTable {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface GlossaryFaq {
+  question: string;
+  answer: string;
+}
+
+export interface GlossaryTerm {
+  id: string;
+  term: string;
+  slug: string;
+  category: GlossaryCategory;
+  quick_answer: string | null;
+  has_formula: boolean;
+  formula: GlossaryFormula | null;
+  extended_explanation: string | null;
+  example: string | null;
+  comparison_table: GlossaryComparisonTable | null;
+  related_terms: string[];
+  faqs: GlossaryFaq[];
+  author_id: string | null;
+  status: PostStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GlossaryTermWithRelations extends GlossaryTerm {
+  author: Pick<Profile, "id" | "full_name" | "email" | "public_title" | "avatar_url"> | null;
 }

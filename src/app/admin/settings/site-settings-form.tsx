@@ -42,6 +42,25 @@ export function SiteSettingsForm({ settings }: { settings: SiteSettings }) {
         )}
       </div>
 
+      <div className="grid gap-2">
+        <Label htmlFor="gtm_id">Google Tag Manager ID</Label>
+        <Input
+          id="gtm_id"
+          name="gtm_id"
+          type="text"
+          placeholder="GTM-XXXXXXX"
+          defaultValue={settings.gtm_id ?? ""}
+          className="max-w-xs"
+        />
+        <p className="text-sm text-muted-foreground">
+          Se instala en todo el sitio (carga diferida al primer scroll/click/touch, o a los 1,5s
+          si no hay interacción antes). Dejalo vacío para no cargar GTM.
+        </p>
+        {state.fieldErrors?.gtm_id && (
+          <p className="text-sm text-destructive">{state.fieldErrors.gtm_id[0]}</p>
+        )}
+      </div>
+
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}
 
       <Button type="submit" disabled={pending} className="w-fit">

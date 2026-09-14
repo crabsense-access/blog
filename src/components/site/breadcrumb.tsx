@@ -30,7 +30,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               {index > 0 && (
                 <span
                   aria-hidden="true"
-                  className="-mt-px mx-2.5 flex items-center text-lg leading-none"
+                  className="-mt-1 mx-2.5 flex items-center text-lg leading-none"
                 >
                   ›
                 </span>

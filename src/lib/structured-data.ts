@@ -1,4 +1,5 @@
-import type { PostFaq, PostWithRelations } from "@/lib/types";
+import type { PostFaq, PostWithRelations, GlossaryTermWithRelations } from "@/lib/types";
+import { GLOSSARY_CATEGORY_LABELS } from "@/lib/validations/glossary";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002";
 const SITE_LOGO = "https://crabsense.com/wp-content/uploads/2022/07/crabsense-logo.svg";
@@ -149,6 +150,68 @@ export function buildFAQSchema(faqs: PostFaq[]) {
         text: faq.answer,
       },
     })),
+  };
+}
+
+// JSON-LD combinado (@graph) para la página de un término de glosario:
+// DefinedTerm (anidado en un DefinedTermSet por categoría), BreadcrumbList,
+// y FAQPage si el término tiene preguntas frecuentes cargadas.
+export function buildGlossaryTermSchema(term: GlossaryTermWithRelations) {
+  const categoryLabel = GLOSSARY_CATEGORY_LABELS[term.category];
+  const url = `${SITE_URL}/glosario/${term.category}/${term.slug}`;
+  const categoryUrl = `${SITE_URL}/glosario/${term.category}`;
+  const glossaryUrl = `${SITE_URL}/glosario`;
+
+  const breadcrumbItems = [
+    { name: "Inicio", item: SITE_URL },
+    { name: "Glosario", item: glossaryUrl },
+    { name: categoryLabel, item: categoryUrl },
+    { name: term.term, item: url },
+  ];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const graph: any[] = [
+    {
+      "@type": "DefinedTerm",
+      "@id": `${url}#term`,
+      name: term.term,
+      description: term.quick_answer || undefined,
+      url,
+      inDefinedTermSet: {
+        "@type": "DefinedTermSet",
+        "@id": `${categoryUrl}#termset`,
+        name: `Glosario de ${categoryLabel}`,
+        url: categoryUrl,
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: breadcrumbItems.map((item, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: item.name,
+        item: item.item,
+      })),
+    },
+  ];
+
+  if (term.faqs.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      mainEntity: term.faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    });
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": graph,
   };
 }
 

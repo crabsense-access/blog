@@ -256,4 +256,47 @@
       animation-play-state: paused;
     }
   }
+
+  /* Pills de subcategoría del menú sticky de categorías del post
+     (post-categories-sticky-nav.tsx): entran todas juntas con un
+     slide-up + fade cuando se abre el acordeón horizontal de una
+     categoría principal. */
+  .pill-slide-up {
+    animation: pill-slide-up 0.3s ease-out;
+  }
+
+  @keyframes pill-slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pill-slide-up {
+      animation: none;
+    }
+  }
+
+  /* Corrimiento posicional de las pills principales del menú sticky
+     (post-categories-sticky-nav.tsx): al hacer hover sobre una categoría
+     (que no sea la primera), esa pill y todas las que están antes se
+     corren juntas hacia la izquierda hasta la posición que ocupaba la
+     pill anterior, y recién cuando termina esa transición se muestran las
+     subcategorías. El valor de translateX se calcula en JS (offsetLeft de
+     cada <li>) y se aplica vía inline style; esta clase solo define la
+     transición. */
+  .sticky-nav-pill-shift {
+    transition: transform 350ms ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sticky-nav-pill-shift {
+      transition: none;
+    }
+  }
 }
