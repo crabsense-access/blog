@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 
 const googleSansFlex = Google_Sans_Flex({
-  weight: ["300", "400", "500", "600", "700", "800"],
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
   subsets: ["latin"],
   variable: "--font-heading",
   display: "swap",
@@ -73,7 +73,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`h-full antialiased ${googleSansFlex.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      {/* suppressHydrationWarning: extensiones del navegador (ej. ColorZilla,
+          que agrega cz-shortcut-listen="true") modifican los atributos del
+          <body> antes de que React hidrate. Solo ignora atributos de este tag,
+          no de sus hijos. */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {gtm_id && (
           // Google Tag Manager (noscript) -- inmediatamente después de
           // abrir <body>, como pide Google para cuando JS está deshabilitado.

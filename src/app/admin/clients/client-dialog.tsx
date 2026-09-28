@@ -66,7 +66,24 @@ export function ClientDialog({ client }: ClientDialogProps) {
             )}
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="row_number">Fila del carrusel</Label>
+            <Label htmlFor="website_url">Sitio web</Label>
+            <Input
+              id="website_url"
+              name="website_url"
+              type="text"
+              inputMode="url"
+              placeholder="empresa.com"
+              defaultValue={client?.website_url ?? ""}
+            />
+            <p className="text-sm text-muted-foreground">
+              Opcional. En el carrusel del hero, el logo linkea a este sitio.
+            </p>
+            {state.fieldErrors?.website_url && (
+              <p className="text-sm text-destructive">{state.fieldErrors.website_url[0]}</p>
+            )}
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="row_number">Fila del carrusel (blog)</Label>
             <Select name="row_number" defaultValue={String(client?.row_number ?? 1)}>
               <SelectTrigger id="row_number" className="w-full">
                 <SelectValue />

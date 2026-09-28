@@ -2,10 +2,134 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import Anthropic from "@anthropic-ai/sdk";
+import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 
 import { createClient } from "@/lib/supabase/server";
-import { postFormSchema } from "@/lib/validations/post";
+import { postFormSchema, postGenerateInputSchema } from "@/lib/validations/post";
+import { postGeneratedContentSchema, type PostGeneratedContent } from "@/lib/post-ai-schema";
 import { uploadPublicImage } from "@/lib/storage";
+
+export interface GeneratePostContentState {
+  data?: PostGeneratedContent;
+  error?: string;
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+}
+
+const POST_SYSTEM_PROMPT = `Sos un redactor experto en marketing digital y analítica web, escribiendo
+notas para el blog de Crabsense (agencia de marketing digital especializada
+en Google Analytics 4, Google Ads, Inteligencia Artificial aplicada a
+marketing, y SEO). Escribís en español rioplatense, con tono profesional
+pero directo, sin relleno ni frases genéricas.
+
+Tenés una herramienta de búsqueda web: usala para encontrar estadísticas,
+estudios y noticias reales y actuales sobre el tema antes de escribir.
+Nunca inventes una cifra, un estudio o una URL -- si no encontrás un dato
+concreto que respalde una afirmación, formulala de forma más general en vez
+de inventar un número o una fuente. En la sección "Fuentes" del contenido,
+incluí solamente URLs que hayan aparecido efectivamente en un resultado de
+la búsqueda web durante esta conversación.
+
+Te dan una categoría, una o dos subcategorías, un tema/idea para la nota, y
+una lista de notas que ya existen en esa categoría. No repitas el mismo
+ángulo que ya está cubierto por una de ellas. Generá una nota completa,
+lista para revisar y publicar.`;
+
+export async function generatePostContent(
+  _prevState: GeneratePostContentState,
+  formData: FormData
+): Promise<GeneratePostContentState> {
+  const parsed = postGenerateInputSchema.safeParse({
+    topic: formData.get("topic"),
+    category_id: formData.get("category_id"),
+    subcategory_ids: formData.getAll("subcategory_ids").map(String),
+  });
+
+  if (!parsed.success) {
+    return {
+      error: "Completá el tema, la categoría principal y al menos una subcategoría antes de autocompletar.",
+    };
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return {
+      error:
+        "Falta configurar ANTHROPIC_API_KEY en el servidor para poder usar el autocompletado con IA.",
+    };
+  }
+
+  const { topic, category_id, subcategory_ids } = parsed.data;
+  const supabase = await createClient();
+
+  const [{ data: category }, { data: subcategories }, { data: existingPosts }] = await Promise.all([
+    supabase.from("categories").select("name").eq("id", category_id).maybeSingle(),
+    supabase.from("subcategories").select("name").in("id", subcategory_ids),
+    supabase
+      .from("posts")
+      .select("title")
+      .eq("category_id", category_id)
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  if (!category) {
+    return { error: "No se encontró la categoría elegida." };
+  }
+
+  const subcategoryNames = (subcategories ?? []).map((s) => s.name).join(", ") || "(ninguna)";
+  const existingTitlesList =
+    (existingPosts ?? []).map((p) => `- ${p.title}`).join("\n") ||
+    "(ninguna nota todavía en esta categoría)";
+
+  try {
+    const client = new Anthropic();
+
+    const response = await client.messages.parse({
+      model: "claude-opus-5",
+      max_tokens: 16000,
+      system: POST_SYSTEM_PROMPT,
+      tools: [
+        {
+          type: "web_search_20260318",
+          name: "web_search",
+          max_uses: 6,
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: `Generá una nota de blog sobre "${topic}" para la categoría ${category.name} (subcategorías: ${subcategoryNames}).\n\nNotas ya publicadas en esta categoría (no repitas el mismo ángulo):\n${existingTitlesList}`,
+        },
+      ],
+      output_config: {
+        format: zodOutputFormat(postGeneratedContentSchema),
+      },
+    });
+
+    if (!response.parsed_output) {
+      return { error: "La IA no devolvió un resultado con el formato esperado. Probá de nuevo." };
+    }
+
+    const inputTokens = response.usage.input_tokens;
+    const outputTokens = response.usage.output_tokens;
+
+    return {
+      data: response.parsed_output,
+      usage: {
+        inputTokens,
+        outputTokens,
+        totalTokens: inputTokens + outputTokens,
+      },
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Error desconocido.";
+    return { error: `No se pudo generar el contenido: ${message}` };
+  }
+}
 
 function parseFormData(formData: FormData) {
   const subcategoryIds = formData.getAll("subcategory_ids").map(String);

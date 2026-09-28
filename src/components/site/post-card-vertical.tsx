@@ -44,11 +44,20 @@ export function PostCardVerticalContent({
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <PostImage
-        src={post.cover_image_url}
-        alt={post.title}
-        className="aspect-video w-full rounded"
-      />
+      <Link
+        href={`/blog/${post.slug}`}
+        // La imagen también lleva al post. Sale del orden de tabulación y de los
+        // lectores de pantalla porque el título ya es el link principal.
+        tabIndex={-1}
+        aria-hidden
+        className="block"
+      >
+        <PostImage
+          src={post.cover_image_url}
+          alt={post.title}
+          className="aspect-video w-full rounded"
+        />
+      </Link>
 
       {category && (showCategory || (showSubcategories && post.subcategories.length > 0)) && (
         <div className="mt-2 mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -76,7 +85,7 @@ export function PostCardVerticalContent({
                   tone="subcategory"
                   href={`/blog/categoria/${category.slug}/${sub.slug}`}
                   className={cn(
-                    "text-sm",
+                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
                     subcategoryPillClassName,
                     active && "bg-gray-800 text-white hover:bg-gray-700"
                   )}
@@ -108,12 +117,12 @@ export function PostCardVerticalContent({
             <div className="flex flex-col leading-tight">
               <Link
                 href={`/blog/autor/${post.author?.id}`}
-                className="text-sm font-medium text-foreground hover:underline"
+                className="text-base font-medium text-foreground hover:underline"
               >
                 {authorLabel}
               </Link>
               {post.author?.public_title && (
-                <span className="text-xs uppercase text-muted-foreground">
+                <span className="text-sm uppercase text-muted-foreground">
                   {post.author.public_title}
                 </span>
               )}
@@ -123,7 +132,7 @@ export function PostCardVerticalContent({
           <div />
         )}
         {post.published_at && (
-          <span className="text-xs uppercase text-muted-foreground">
+          <span className="text-sm uppercase text-muted-foreground">
             {new Date(post.published_at).toLocaleDateString("es-AR", {
               year: "numeric",
               month: "short",
@@ -160,7 +169,7 @@ export function PostCardVertical({
   excerptClassName,
 }: PostCardVerticalProps) {
   return (
-    <div className="w-[calc((100%-3rem)/3.2)] shrink-0 snap-start">
+    <div className="w-[calc((100%-3rem)/3.12)] shrink-0 snap-start">
       <PostCardVerticalContent
         post={post}
         showCategory={showCategory}

@@ -95,6 +95,8 @@ export interface Client {
   id: string;
   name: string;
   logo_url: string;
+  // Sitio web del cliente (opcional, normalizado con https://)
+  website_url: string | null;
   row_number: 1 | 2 | 3;
   sort_order: number;
   created_at: string;
@@ -106,6 +108,10 @@ export interface SiteSettings {
   // ID de Google Tag Manager (ej. "GTM-XXXXXXX"), configurable desde
   // /admin/settings. null mientras no se cargue ninguno.
   gtm_id: string | null;
+  // Textos del hero de la home (pill de arriba y titular grande). null o
+  // vacío = no se muestra ese elemento.
+  hero_pill_text: string | null;
+  hero_title: string | null;
   updated_at: string;
 }
 

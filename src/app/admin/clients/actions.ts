@@ -15,6 +15,7 @@ function parse(formData: FormData) {
   return clientFormSchema.safeParse({
     name: formData.get("name"),
     row_number: formData.get("row_number"),
+    website_url: formData.get("website_url") ?? "",
   });
 }
 
@@ -47,6 +48,7 @@ export async function createClientLogo(
 
   revalidatePath("/admin/clients");
   revalidatePath("/blog");
+  revalidatePath("/");
   return {};
 }
 
@@ -76,6 +78,7 @@ export async function updateClientLogo(
 
   revalidatePath("/admin/clients");
   revalidatePath("/blog");
+  revalidatePath("/");
   return {};
 }
 
@@ -127,6 +130,7 @@ export async function deleteClientLogo(id: string): Promise<DeleteClientState> {
 
     revalidatePath("/admin/clients");
     revalidatePath("/blog");
+    revalidatePath("/");
     return {};
   } catch (e) {
     logSupabaseError("deleteClientLogo threw:", e);

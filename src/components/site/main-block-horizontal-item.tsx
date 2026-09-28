@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { PostImage } from "@/components/site/post-image";
 import { TagPill } from "@/components/site/tag-pill";
-import { AuthorAvatar } from "@/components/site/author-avatar";
 import { orderSubcategoriesForDisplay } from "@/lib/subcategory-order";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
@@ -17,10 +16,8 @@ interface MainBlockHorizontalItemProps {
   showAuthorMeta?: boolean;
   // Overrides opcionales de tamaño — sin usarlos, el item se ve igual que
   // en el Bloque Principal de la home. Las páginas de categoría/
-  // subcategoría los usan para agrandar apenas el título y el bloque de
-  // autor/fecha.
+  // subcategoría lo usan para agrandar apenas el título.
   titleClassName?: string;
-  authorNameClassName?: string;
   metaClassName?: string;
   // Override del contenedor raíz — lo usa la página de categoría/
   // subcategoría para anular el pt-2 del primer item y que su imagen
@@ -50,11 +47,9 @@ export function MainBlockHorizontalItem({
   showPills = true,
   showAuthorMeta = true,
   titleClassName,
-  authorNameClassName,
   metaClassName,
   className,
 }: MainBlockHorizontalItemProps) {
-  const authorLabel = post.author?.full_name || post.author?.email;
   const category = post.category;
   const orderedSubcategories = orderSubcategoriesForDisplay(
     post.subcategories,
@@ -78,11 +73,20 @@ export function MainBlockHorizontalItem({
           sobrante queda en blanco debajo en vez de estirar la imagen más
           allá de su alto de contenido. */}
       <div className="grid grid-cols-[12rem_1fr] gap-x-6 gap-y-4">
-        <PostImage
-          src={post.cover_image_url}
-          alt={post.title}
-          className="row-start-1 w-full rounded"
-        />
+        <Link
+          href={`/blog/${post.slug}`}
+          // La imagen también lleva al post. Sale del orden de tabulación y de los
+          // lectores de pantalla porque el título ya es el link principal.
+          tabIndex={-1}
+          aria-hidden
+          className="row-start-1 block w-full"
+        >
+          <PostImage
+            src={post.cover_image_url}
+            alt={post.title}
+            className="h-full w-full rounded"
+          />
+        </Link>
 
         <div className="row-start-1 flex min-w-0 flex-col justify-start gap-4">
           {showPills && category && (
@@ -96,7 +100,7 @@ export function MainBlockHorizontalItem({
                   tone="subcategory"
                   href={`/blog/categoria/${category.slug}/${sub.slug}`}
                   className={cn(
-                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
                     active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                   )}
                 >
@@ -128,40 +132,15 @@ export function MainBlockHorizontalItem({
             <p className="font-excerpt line-clamp-2 text-lg text-muted-foreground">{post.excerpt}</p>
           )}
 
-          {showAuthorMeta && (
-            <div className="flex items-end justify-between gap-2 pt-4">
-              {authorLabel ? (
-                <div className="flex items-center gap-2">
-                  <AuthorAvatar author={post.author ?? {}} />
-                  <div className="flex flex-col leading-tight">
-                    <Link
-                      href={`/blog/autor/${post.author?.id}`}
-                      className={cn(
-                        "text-sm font-medium text-foreground hover:underline",
-                        authorNameClassName
-                      )}
-                    >
-                      {authorLabel}
-                    </Link>
-                    {post.author?.public_title && (
-                      <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
-                        {post.author.public_title}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div />
-              )}
-              {post.published_at && (
-                <span className={cn("text-xs uppercase text-muted-foreground", metaClassName)}>
-                  {new Date(post.published_at).toLocaleDateString("es-AR", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-              )}
+          {showAuthorMeta && post.published_at && (
+            <div className="flex items-end justify-end gap-2 pt-4">
+              <span className={cn("text-sm uppercase text-muted-foreground", metaClassName)}>
+                {new Date(post.published_at).toLocaleDateString("es-AR", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
             </div>
           )}
         </div>

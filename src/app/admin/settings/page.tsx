@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getHomeBanner } from "@/lib/queries/home-banner";
 import { getSiteSettings } from "@/lib/queries/site-settings";
 import { createClient } from "@/lib/supabase/server";
+import { HeroSettingsForm } from "./hero-settings-form";
 import { HomeBannerForm } from "./home-banner-form";
 import { ProfileForm } from "./profile-form";
 import { SiteSettingsForm } from "./site-settings-form";
@@ -27,6 +28,20 @@ export default async function SettingsPage() {
     <div className="grid gap-10">
       <div>
         <h1 className="text-2xl font-semibold">Configuración</h1>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold">Hero de la home</h2>
+        <p className="text-sm text-muted-foreground">
+          Pill y titular que aparecen arriba del bloque &quot;¿Qué proyecto tenés en mente hoy?&quot;.
+        </p>
+        <div className="mt-6">
+          <HeroSettingsForm settings={siteSettings} />
+        </div>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold">Banner destacado</h2>
         <p className="text-sm text-muted-foreground">
           Banner destacado que aparece en la home, junto al artículo destacado.
         </p>

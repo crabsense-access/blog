@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,14 +19,16 @@ const NAV_LINKS = [
   { href: "/glosario", label: "Glosario" },
 ];
 
-// Umbral en px antes de permitir que el header se esconda,
-// para que no se oculte apenas se empieza a scrollear.
-const HIDE_THRESHOLD = 80;
+// Px de scroll a partir de los cuales el header deja de ser transparente.
+const SCROLLED_THRESHOLD = 8;
 
 export function SiteHeader() {
-  const [hidden, setHidden] = useState(false);
-  const lastScrollY = useRef(0);
-  const ticking = useRef(false);
+  // En la home el header arranca transparente sobre el hero oscuro y pasa a
+  // blanco apenas se scrollea (cuando queda "pegado" como sticky).
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+  const [scrolled, setScrolled] = useState(false);
+  const transparent = isHome && !scrolled;
   const headerRef = useRef<HTMLElement>(null);
 
   // Expone el alto real del header como variable CSS, para que otros
@@ -45,45 +48,25 @@ export function SiteHeader() {
     return () => observer.disconnect();
   }, []);
 
-  // Expone además el "offset" que le corresponde a cualquier bloque sticky
-  // que vaya pegado justo debajo del header (ej. PostCategoriesStickyNav):
-  // la altura del header mientras está visible, y 0 en el mismo instante
-  // en que el header se esconde (translateY -100% al scrollear hacia
-  // abajo) — así ese otro bloque puede subir a top:0 y ocupar el lugar del
-  // header en vez de dejar un hueco en blanco, y volver a su lugar justo
-  // debajo apenas el header reaparece. Al ser un valor "var(...)" en vez
-  // de un px fijo, sigue reflejando la altura real del header (la que
-  // actualiza el ResizeObserver de arriba) aun mientras está visible.
+  // Offset para bloques sticky que van pegados debajo del header (ej.
+  // PostCategoriesStickyNav). El header ahora es siempre visible, así que
+  // es siempre su alto real.
   useEffect(() => {
     document.documentElement.style.setProperty(
       "--site-header-offset",
-      hidden ? "0px" : "var(--site-header-height, 4.5rem)"
+      "var(--site-header-height, 4.5rem)"
     );
-  }, [hidden]);
+  }, []);
 
+  // Solo detecta si la página está scrolleada (para el fondo blanco y la
+  // línea de abajo). El header ya no se esconde nunca: queda siempre fijo.
   useEffect(() => {
-    lastScrollY.current = window.scrollY;
-
     function handleScroll() {
-      if (ticking.current) return;
-      ticking.current = true;
-
-      requestAnimationFrame(() => {
-        const currentY = window.scrollY;
-        const scrollingDown = currentY > lastScrollY.current;
-
-        if (currentY <= HIDE_THRESHOLD) {
-          setHidden(false);
-        } else {
-          setHidden(scrollingDown);
-        }
-
-        lastScrollY.current = currentY;
-        ticking.current = false;
-      });
+      setScrolled(window.scrollY > SCROLLED_THRESHOLD);
     }
-
     window.addEventListener("scroll", handleScroll, { passive: true });
+    // estado inicial (ej. si la página carga ya scrolleada)
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -91,8 +74,10 @@ export function SiteHeader() {
     <header
       ref={headerRef}
       className={cn(
-        "border-b bg-white sticky top-0 z-50 transition-transform duration-300 ease-in-out",
-        hidden ? "-translate-y-full" : "translate-y-0"
+        "border-b sticky top-0 z-50 transition-[background-color,border-color] duration-300 ease-in-out",
+        // sin línea abajo al inicio; aparece apenas se empieza a scrollear
+        scrolled ? "border-neutral-200" : "border-transparent",
+        transparent ? "bg-transparent" : "bg-white"
       )}
     >
       <div className="max-w-[108rem] mx-auto px-10">
@@ -100,7 +85,11 @@ export function SiteHeader() {
           {/* Logo */}
           <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
             {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos, ver post-image.tsx */}
-            <img src="/crabsense-logo.svg" alt="Crabsense" className="h-9 w-auto" />
+            <img
+              src="/crabsense-logo.svg"
+              alt="Crabsense"
+              className="h-11 w-auto"
+            />
           </Link>
 
           {/* Navigation */}
@@ -125,7 +114,11 @@ export function SiteHeader() {
             {/* Mobile Navigation */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="md:hidden">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn("md:hidden", transparent && "bg-white/60")}
+                >
                   <Menu className="size-5" />
                   <span className="sr-only">Abrir menú</span>
                 </Button>

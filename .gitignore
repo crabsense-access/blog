@@ -47,3 +47,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
+
+# Archivos locales que no son del sitio
+BusinessGrowthGrotesk-*
+/Claude outputs/

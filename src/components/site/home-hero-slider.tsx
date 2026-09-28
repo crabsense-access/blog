@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { PostImage } from "@/components/site/post-image";
 import { AuthorAvatar } from "@/components/site/author-avatar";
+import { TagPill } from "@/components/site/tag-pill";
+import { CategoryPillCircleFill } from "@/components/site/category-pill-circle-fill";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
 
@@ -240,6 +242,18 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
           );
         })}
 
+        {/* La imagen destacada (fondo) también lleva al post activo. Queda
+            por debajo de las cards (z-index 10+), así las cards siguen
+            funcionando igual. */}
+        {posts[activeIndex] && (
+          <Link
+            href={`/blog/${posts[activeIndex].slug}`}
+            tabIndex={-1}
+            aria-hidden
+            className="absolute inset-0 z-[1]"
+          />
+        )}
+
         {posts.map((post, i) => {
           // index 1-based, tal como en la fórmula de referencia (card1=1,
           // card2=2, card3=3).
@@ -283,18 +297,28 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
                 boxShadow: "0 -6px 10px rgba(0,0,0,0.08), 0 8px 18px rgba(0,0,0,0.05)",
               }}
             >
-              {post.category && (
-                <span
-                  className="mr-[2%] inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border-2 bg-transparent px-4 py-1 text-base font-bold uppercase"
-                  style={{
-                    borderColor: post.category.pill_color || "#9ca3af",
-                    color: post.category.pill_color || "#9ca3af",
-                  }}
-                >
-                  {post.category.name}
-                </span>
+              {(post.category || post.subcategories.length > 0) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {post.category && (
+                    <CategoryPillCircleFill
+                      color={post.category.pill_color}
+                      className="px-4 py-1 text-base"
+                    >
+                      {post.category.name}
+                    </CategoryPillCircleFill>
+                  )}
+                  {post.subcategories.map((sub) => (
+                    <TagPill
+                      key={sub.id}
+                      tone="subcategory"
+                      className="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+                    >
+                      {sub.name}
+                    </TagPill>
+                  ))}
+                </div>
               )}
-              <h2 className="font-heading line-clamp-2 mt-4 text-2xl font-normal leading-[1.1] sm:text-4xl md:text-[2.4rem] md:tracking-[-1px]">
+              <h2 className="font-heading line-clamp-2 mt-4 text-[1.85rem] font-normal leading-[1.1] sm:text-[2.75rem] md:text-[3rem] md:tracking-[-1px]">
                 {post.title}
               </h2>
               {post.excerpt && (
@@ -304,7 +328,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
               )}
               <div className="mt-12 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <span
-                  className="font-heading inline-flex w-fit items-center gap-1.5 rounded-full px-7 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                  className="font-heading inline-flex w-fit items-center gap-1.5 rounded-full px-7 py-3.5 text-sm font-medium uppercase text-white transition-opacity hover:opacity-90"
                   style={{ backgroundColor: post.category?.pill_color || "#111827" }}
                 >
                   Leer más
@@ -315,11 +339,11 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
                   <div className="flex items-center gap-2">
                     <AuthorAvatar author={post.author ?? {}} />
                     <div className="flex flex-col leading-tight">
-                      <span className="text-sm font-medium text-foreground">
+                      <span className="text-base font-medium text-foreground">
                         {post.author?.full_name || post.author?.email}
                       </span>
                       {post.published_at && (
-                        <span className="text-xs uppercase text-muted-foreground">
+                        <span className="text-sm uppercase text-muted-foreground">
                           {new Date(post.published_at).toLocaleDateString("es-AR", {
                             year: "numeric",
                             month: "short",

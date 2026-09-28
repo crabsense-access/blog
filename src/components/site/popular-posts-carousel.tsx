@@ -16,6 +16,12 @@ import type { PostWithRelations } from "@/lib/types";
 
 interface PopularPostsCarouselProps {
   posts: PostWithRelations[];
+  // Título de la sección. Por defecto "Más vistos" (home del blog); la home
+  // del sitio pasa uno propio con link al blog.
+  title?: React.ReactNode;
+  // Elemento opcional alineado a la derecha, a la altura del título
+  // (ej. una pill "Ver más artículos").
+  action?: React.ReactNode;
 }
 
 const SCROLL_AMOUNT = 600;
@@ -25,7 +31,7 @@ type CarouselItem =
   | { type: "post"; post: PostWithRelations }
   | { type: "promo" };
 
-export function PopularPostsCarousel({ posts }: PopularPostsCarouselProps) {
+export function PopularPostsCarousel({ posts, title = "Más vistos", action }: PopularPostsCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(posts.length > 0);
@@ -59,37 +65,10 @@ export function PopularPostsCarousel({ posts }: PopularPostsCarouselProps) {
       <div className={CAROUSEL_HEADER_WRAPPER_CLASS}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div />
-          <h2 className="font-heading shrink-0 text-center text-[2.5rem] font-normal">
-            Más vistos
+          <h2 className="font-heading shrink-0 text-center text-[2.5rem] font-normal tracking-tight">
+            {title}
           </h2>
-          <div className="flex justify-end">
-            {hasOverflow && (
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-16 rounded-full disabled:opacity-20"
-                  disabled={!canScrollPrev}
-                  onClick={() => scrollBy(-1)}
-                >
-                  <ChevronLeftIcon className="size-7" strokeWidth={1.5} />
-                  <span className="sr-only">Anterior</span>
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="size-16 rounded-full disabled:opacity-20"
-                  disabled={!canScrollNext}
-                  onClick={() => scrollBy(1)}
-                >
-                  <ChevronRightIcon className="size-7" strokeWidth={1.5} />
-                  <span className="sr-only">Siguiente</span>
-                </Button>
-              </div>
-            )}
-          </div>
+          <div className="hidden justify-end md:flex">{action}</div>
         </div>
       </div>
 
@@ -99,9 +78,29 @@ export function PopularPostsCarousel({ posts }: PopularPostsCarouselProps) {
           onScroll={updateScrollState}
           className={CAROUSEL_SCROLL_ROW_CLASS}
         >
+          {/* Flechas superpuestas sobre el borde de la primera/última
+              imagen: mismo ancho/aspect-video que una card real (para que
+              su alto coincida con el de la imagen), sticky left-0/right-0
+              para quedar fijas en el borde visible al scrollear, con un
+              margen negativo que cancela su propio ancho. */}
+          {hasOverflow && (
+            <div className="pointer-events-none sticky left-0 top-0 z-10 mr-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="pointer-events-auto size-20 -translate-x-1/2 rounded-full disabled:opacity-20"
+                disabled={!canScrollPrev}
+                onClick={() => scrollBy(-1)}
+              >
+                <ChevronLeftIcon className="size-7" strokeWidth={1.5} />
+                <span className="sr-only">Anterior</span>
+              </Button>
+            </div>
+          )}
           {items.map((item) =>
             item.type === "promo" ? (
-              <div key="promo" className="w-[calc((100%-3rem)/3.2)] shrink-0 snap-start">
+              <div key="promo" className="w-[calc((100%-3rem)/3.12)] shrink-0 snap-start">
                 <InstagramPromoBlock />
               </div>
             ) : (
@@ -110,11 +109,26 @@ export function PopularPostsCarousel({ posts }: PopularPostsCarouselProps) {
                 post={item.post}
                 categoryPillVariant="outline"
                 categoryPillClassName="px-4 py-1 text-base"
-                subcategoryPillClassName="border-2 border-gray-200 bg-gray-200 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-600"
+                subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
                 titleClassName="font-heading font-normal text-2xl lg:text-3xl"
                 excerptClassName="text-lg"
               />
             )
+          )}
+          {hasOverflow && (
+            <div className="pointer-events-none sticky right-0 top-0 z-10 ml-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="pointer-events-auto size-20 translate-x-1/2 rounded-full disabled:opacity-20"
+                disabled={!canScrollNext}
+                onClick={() => scrollBy(1)}
+              >
+                <ChevronRightIcon className="size-7" strokeWidth={1.5} />
+                <span className="sr-only">Siguiente</span>
+              </Button>
+            </div>
           )}
         </div>
       ) : (

@@ -1,129 +1,139 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import Link from "next/link";
+import { HeroSolaris } from "@/components/site/hero-solaris";
+import { HeroPromptBox } from "@/components/site/hero-prompt-box";
+import { TagPill } from "@/components/site/tag-pill";
+import { ServicesStickySection } from "@/components/site/services-sticky-section";
+import { HeroClientLogos } from "@/components/site/hero-client-logos";
+import { getPublicClients } from "@/lib/queries/clients";
+import { getPopularPosts } from "@/lib/queries/posts";
+import { getPublicServiceImages } from "@/lib/queries/service-images";
+import { PopularPostsCarousel } from "@/components/site/popular-posts-carousel";
+import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [{ hero_pill_text, hero_title }, clients, popularPosts, serviceImages] = await Promise.all([
+    getPublicSiteSettings(),
+    getPublicClients(),
+    // Mismos "Más vistos" que la home del blog (posts marcados como populares)
+    getPopularPosts([], 6).catch(() => []),
+    getPublicServiceImages(),
+  ]);
+
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white py-20 md:py-32">
-        <div className="max-w-[108rem] mx-auto px-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl mb-6">
-              Innovación y Transformación Digital
-            </h1>
-            <p className="text-xl md:text-2xl text-slate-300 mb-8">
-              Expertos en soluciones tecnológicas que impulsan tu negocio hacia el futuro
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/blog">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
-                  Leer Nuestro Blog
-                </Button>
-              </Link>
-              <Button asChild size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-slate-900">
-                <Link href="/contacto">Contáctanos</Link>
-              </Button>
+      <section className="relative overflow-hidden bg-white text-neutral-950 h-[100svh] min-h-[600px] -mt-[var(--site-header-height,69px)] flex items-center lg:items-stretch">
+        {/* Fondo gris de la columna derecha (estatua + anillo), solo en escritorio.
+            Mismo alto que la columna izquierda: arranca debajo del header y
+            termina a max(4svh, 24px) del fondo, con 40px de margen lateral. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute bottom-[max(4svh,24px)] left-[calc(55vw+2.5rem)] right-10 top-[calc(var(--site-header-height,69px)+max(4svh,24px))] hidden rounded-[32px] bg-neutral-50 lg:block"
+        />
+        {/* Solo el anillo animado detrás de la estatua; las capas de fondo
+            (aurora, halo, grilla, viñeta) quedan apagadas por ahora → hero en
+            blanco. Para volver a activarlas, sacar background={false}. */}
+        <HeroSolaris anchorX={0.775} anchorY={0.55} background={false} />
+        {/* Estatua: en escritorio, centrada (horizontal y vertical) en el bloque gris
+            de la derecha: x = 77.5% (centro de la columna de 45vw), y = punto medio
+            entre el borde inferior del header y el fondo del hero. */}
+        {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos */}
+        <img
+          src="/hero-estatua.webp"
+          alt="Estatua romana sentada usando un smartphone y auriculares"
+          width={656}
+          height={1175}
+          fetchPriority="high"
+          className="pointer-events-none absolute left-[77.5%] top-[calc((var(--site-header-height,69px)+100%)/2)] z-[5] hidden h-[74%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 select-none lg:block drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]"
+        />
+        {/* Hero en dos columnas en escritorio: izquierda 55vw (bloque de texto +
+            prompt, centrado) y derecha 45vw (estatua + anillo Solaris, centrados
+            en 55 + 45/2 = 77.5%). En escritorio el bloque gris ocupa todo el alto
+            del hero: arranca debajo del header y termina a la misma distancia del
+            fondo que la estatua (bottom-[4%] = max(4svh, 24px)), con el contenido
+            centrado verticalmente adentro. */}
+        <div className="relative z-10 w-full px-10 lg:px-0 lg:pb-[max(4svh,24px)] lg:pt-[calc(var(--site-header-height,69px)+max(4svh,24px))]">
+          <div className="flex justify-center lg:h-full lg:w-[55vw] lg:px-10">
+            <div className="relative w-full max-w-2xl p-6 md:p-10 lg:flex lg:h-full lg:w-full lg:max-w-[52rem] lg:flex-col lg:[justify-content:safe_center] lg:*:shrink-0">
+              {hero_pill_text && (
+                // Mismo estilo que las pills de categoría del blog (outline +
+                // relleno deslizante en hover), en el violeta de la marca.
+                <TagPill
+                  tone="category"
+                  variant="outline"
+                  color="#535396"
+                  className="mb-5 px-4 py-1 text-base"
+                >
+                  {hero_pill_text}
+                </TagPill>
+              )}
+              {hero_title && (
+                <h1 className="mb-14 text-balance font-heading text-6xl font-normal leading-[1.05] tracking-tight text-[#4a4a4a] md:text-7xl">
+                  {hero_title}
+                </h1>
+              )}
+              <HeroPromptBox headingAs={hero_title ? "h2" : "h1"} />
+              <HeroClientLogos clients={clients} />
             </div>
           </div>
         </div>
+        {/* Línea divisoria fina al final del hero (100% del ancho) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-px bg-neutral-200"
+        />
       </section>
 
-      {/* Valores Section */}
-      <section className="py-16 md:py-24">
+      {/* Nuestros servicios: columna izquierda sticky + 4 tarjetas que pasan */}
+      <ServicesStickySection images={serviceImages} />
+
+      {/* Más vistos: misma sección que la home del blog, con el mismo
+          contenedor (max-w-[108rem] px-10) que usa el carrusel para
+          alinear el título y las flechas */}
+      {popularPosts.length > 0 && (
         <div className="max-w-[108rem] mx-auto px-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl mb-4">Nuestros Valores</h2>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              Nos guían en cada proyecto y decisión que tomamos
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: '🚀',
-                title: 'Innovación',
-                description: 'Siempre buscamos las mejores tecnologías y metodologías para adelantarnos al futuro',
-              },
-              {
-                icon: '🤝',
-                title: 'Colaboración',
-                description: 'Trabajamos en equipo con nuestros clientes para lograr objetivos comunes',
-              },
-              {
-                icon: '✨',
-                title: 'Excelencia',
-                description: 'Comprometidos con la calidad en cada detalle de nuestro trabajo',
-              },
-            ].map((valor, i) => (
-              <Card key={i} className="p-8 hover:shadow-lg transition-shadow">
-                <div className="text-4xl mb-4">{valor.icon}</div>
-                <h3 className="text-xl font-bold mb-3">{valor.title}</h3>
-                <p className="text-slate-600">{valor.description}</p>
-              </Card>
-            ))}
-          </div>
+          <PopularPostsCarousel
+            posts={popularPosts}
+            title={
+              <>
+                <Link
+                  href="/blog"
+                  className="text-[#535396] underline-offset-8 transition-colors hover:text-[#3d3c89] hover:underline"
+                >
+                  Blog
+                </Link>
+                <span className="mx-3 text-neutral-300" aria-hidden>
+                  /
+                </span>
+                {/* mismo gris que el titular del hero */}
+                <span className="text-[#4a4a4a]">Artículos más vistos</span>
+              </>
+            }
+            action={
+              <TagPill
+                href="/blog"
+                tone="category"
+                variant="outline"
+                color="#535396"
+                className="px-4 py-1 text-base"
+              >
+                Ver más artículos
+              </TagPill>
+            }
+          />
         </div>
-      </section>
+      )}
 
-      <Separator />
-
-      {/* Servicios Section */}
-      <section className="py-16 md:py-24 bg-slate-50">
-        <div className="max-w-[108rem] mx-auto px-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl mb-4">Nuestros Servicios</h2>
-            <p className="text-slate-600 text-lg max-w-2xl mx-auto">
-              Soluciones integrales para tu transformación digital
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                title: 'Desarrollo Web',
-                description: 'Aplicaciones web modernas, escalables y de alto rendimiento',
-              },
-              {
-                title: 'Consultoría Digital',
-                description: 'Estrategias y soluciones personalizadas para tu negocio',
-              },
-              {
-                title: 'Datos e Inteligencia',
-                description: 'Analytics avanzado y soluciones de datos para decisiones inteligentes',
-              },
-              {
-                title: 'Transformación Cloud',
-                description: 'Migración y optimización de infraestructura en la nube',
-              },
-            ].map((servicio, i) => (
-              <div key={i} className="bg-white p-8 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <h3 className="text-xl font-bold mb-2">{servicio.title}</h3>
-                <p className="text-slate-600">{servicio.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-[108rem] mx-auto px-10 text-center">
-          <h2 className="text-3xl md:text-4xl mb-6">
+      {/* CTA final: fondo gris claro y el mismo bloque de prompt del hero
+          para que nos contacten */}
+      <section className="bg-neutral-100 py-16 text-[#4a4a4a] md:py-24">
+        <div className="mx-auto max-w-[108rem] px-10">
+          <h2 className="mb-10 text-center font-heading text-3xl tracking-tight md:text-4xl">
             ¿Listo para transformar tu negocio?
           </h2>
-          <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
-            Contáctanos hoy y descubre cómo podemos ayudarte a alcanzar tus objetivos
-          </p>
-          <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-slate-100">
-            <Link href="/contacto">Solicitar Consulta</Link>
-          </Button>
+          <HeroPromptBox headingAs="h3" showQuestion={false} className="mx-auto max-w-2xl" />
         </div>
       </section>
     </main>

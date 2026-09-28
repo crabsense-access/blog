@@ -16,6 +16,12 @@ interface TagPillProps {
   // lado al sacar el mouse) — ver bloque `outline` más abajo.
   variant?: "solid" | "outline";
   color?: string | null;
+  // Color del relleno que entra deslizando en hover (solo aplica a
+  // variant="outline"). Por defecto es el mismo `color` que el borde/texto
+  // (comportamiento de siempre); se puede pasar aparte para que el hover
+  // quede apenas más oscuro/distinto que el color de reposo, sin tocar el
+  // borde ni el texto en estado normal.
+  hoverColor?: string | null;
   className?: string;
 }
 
@@ -25,9 +31,11 @@ export function TagPill({
   tone = "default",
   variant = "solid",
   color,
+  hoverColor,
   className,
 }: TagPillProps) {
   const customColor = tone === "category" ? color : null;
+  const customHoverColor = tone === "category" ? hoverColor ?? customColor : null;
   const outline = tone === "category" && variant === "outline";
 
   // Las pills "outline" de categoría (post cards, Bloque Principal, header
@@ -47,15 +55,20 @@ export function TagPill({
     <span
       className={cn(
         "group/pill relative isolate inline-flex w-fit items-center gap-1 overflow-hidden whitespace-nowrap rounded-full border-2 bg-transparent px-3 py-1 text-xs font-bold uppercase",
-        "[border-color:var(--pill-color)] [color:var(--pill-color)]",
+        "[border-color:var(--pill-color)] [color:var(--pill-color)] hover:[border-color:var(--pill-hover-color)]",
         "transition-colors duration-300 hover:text-white",
         className
       )}
-      style={{ "--pill-color": customColor || "#9ca3af" } as CSSProperties}
+      style={
+        {
+          "--pill-color": customColor || "#9ca3af",
+          "--pill-hover-color": customHoverColor || customColor || "#9ca3af",
+        } as CSSProperties
+      }
     >
       <span
         aria-hidden="true"
-        className="absolute inset-0 -z-10 -translate-x-full bg-[var(--pill-color)] transition-transform duration-300 ease-out group-hover/pill:translate-x-0"
+        className="absolute inset-0 -z-10 -translate-x-full bg-[var(--pill-hover-color)] transition-transform duration-300 ease-out group-hover/pill:translate-x-0"
       />
       <span className="relative inline-flex items-center gap-1">{children}</span>
     </span>

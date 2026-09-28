@@ -54,8 +54,6 @@ export function CategoryPostsList({ initialPosts, totalCount, loadMore }: Catego
             post={post}
             className={index === 0 ? "pt-0" : undefined}
             titleClassName="min-h-20 text-3xl lg:text-4xl"
-            authorNameClassName="text-base"
-            metaClassName="text-sm"
           />
         </Fragment>
       ))}

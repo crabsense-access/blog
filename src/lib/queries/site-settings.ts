@@ -45,6 +45,8 @@ export async function getPublicSiteSettings(): Promise<SiteSettings> {
       id: true,
       category_page_initial_items: 10,
       gtm_id: null,
+      hero_pill_text: "Agencia de marketing digital con IA",
+      hero_title: "Esto es una prueba desde el admin",
       updated_at: new Date().toISOString(),
     };
   }

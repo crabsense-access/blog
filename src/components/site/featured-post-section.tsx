@@ -21,11 +21,20 @@ interface FeaturedPostSectionProps {
 
 export function FeaturedPostImage({ post, className }: FeaturedPostSectionProps) {
   return (
-    <PostImage
-      src={post.cover_image_url}
-      alt={post.title}
-      className={cn("aspect-[2/1] h-full w-full overflow-hidden rounded", className)}
-    />
+    <Link
+      href={`/blog/${post.slug}`}
+      // La imagen también lleva al post. Sale del orden de tabulación y de los
+      // lectores de pantalla porque el título ya es el link principal.
+      tabIndex={-1}
+      aria-hidden
+      className="block h-full w-full"
+    >
+      <PostImage
+        src={post.cover_image_url}
+        alt={post.title}
+        className={cn("aspect-[2/1] h-full w-full overflow-hidden rounded", className)}
+      />
+    </Link>
   );
 }
 
@@ -60,7 +69,7 @@ export function FeaturedPostContent({
                 tone="subcategory"
                 href={`/blog/categoria/${category.slug}/${sub.slug}`}
                 className={cn(
-                  "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                  "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
                   active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                 )}
               >
@@ -88,11 +97,11 @@ export function FeaturedPostContent({
           <div className="flex items-center gap-2">
             <AuthorAvatar author={post.author ?? {}} />
             <div className="flex flex-col leading-tight">
-              <Link href={`/blog/autor/${post.author?.id}`} className="text-sm font-medium text-foreground hover:underline">
+              <Link href={`/blog/autor/${post.author?.id}`} className="text-base font-medium text-foreground hover:underline">
                 {authorLabel}
               </Link>
               {post.author?.public_title && (
-                <span className="text-xs uppercase text-muted-foreground">
+                <span className="text-sm uppercase text-muted-foreground">
                   {post.author.public_title}
                 </span>
               )}
@@ -102,7 +111,7 @@ export function FeaturedPostContent({
           <div />
         )}
         {post.published_at && (
-          <span className="text-xs uppercase text-muted-foreground">
+          <span className="text-sm uppercase text-muted-foreground">
             {new Date(post.published_at).toLocaleDateString("es-AR", {
               year: "numeric",
               month: "short",

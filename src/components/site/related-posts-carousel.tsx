@@ -64,47 +64,58 @@ export function RelatedPostsCarousel({ title, posts, className }: RelatedPostsCa
           >
             {title}
           </h2>
-          {hasOverflow && (
-            <div className="flex shrink-0 items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-16 rounded-full disabled:opacity-20"
-                disabled={!canScrollPrev}
-                onClick={() => scrollBy(-1)}
-              >
-                <ChevronLeftIcon className="size-7" strokeWidth={1.5} />
-                <span className="sr-only">Anterior</span>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="size-16 rounded-full disabled:opacity-20"
-                disabled={!canScrollNext}
-                onClick={() => scrollBy(1)}
-              >
-                <ChevronRightIcon className="size-7" strokeWidth={1.5} />
-                <span className="sr-only">Siguiente</span>
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
       <div ref={scrollRef} onScroll={updateScrollState} className={CAROUSEL_SCROLL_ROW_CLASS}>
+        {/* Flechas superpuestas sobre el borde de la primera/última imagen:
+            viven DENTRO de la fila con scroll (mismo ancho/aspect-video que
+            una card real, para que su alto coincida exacto con el de la
+            imagen) pero con sticky left-0/right-0 para quedar fijas en el
+            borde visible mientras se scrollea, y un margen negativo que
+            cancela su propio ancho para no correr a las cards reales ni
+            sumar scroll de más. */}
+        {hasOverflow && (
+          <div className="pointer-events-none sticky left-0 top-0 z-10 mr-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="pointer-events-auto size-20 -translate-x-1/2 rounded-full disabled:opacity-20"
+              disabled={!canScrollPrev}
+              onClick={() => scrollBy(-1)}
+            >
+              <ChevronLeftIcon className="size-7" strokeWidth={1.5} />
+              <span className="sr-only">Anterior</span>
+            </Button>
+          </div>
+        )}
         {posts.map((post) => (
           <PostCardVertical
             key={post.id}
             post={post}
             categoryPillVariant="outline"
             categoryPillClassName="px-4 py-1 text-base"
-            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
+            subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
             titleClassName="font-heading font-normal text-2xl lg:text-3xl"
             excerptClassName="text-lg"
           />
         ))}
+        {hasOverflow && (
+          <div className="pointer-events-none sticky right-0 top-0 z-10 ml-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="pointer-events-auto size-20 translate-x-1/2 rounded-full disabled:opacity-20"
+              disabled={!canScrollNext}
+              onClick={() => scrollBy(1)}
+            >
+              <ChevronRightIcon className="size-7" strokeWidth={1.5} />
+              <span className="sr-only">Siguiente</span>
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );

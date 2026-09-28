@@ -229,6 +229,13 @@
     animation: marquee-left 48s linear infinite;
   }
 
+  /* Difuminado en los dos extremos del carrusel (el contenido se desvanece
+     hacia los bordes). */
+  .marquee-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+
   .marquee-track-reverse {
     animation-name: marquee-right;
   }

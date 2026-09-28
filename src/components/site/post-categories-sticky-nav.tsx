@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { ReadingProgressBar } from "@/components/site/reading-progress-bar";
 import { TagPill } from "@/components/site/tag-pill";
+import { CategoryPillCircleFill } from "@/components/site/category-pill-circle-fill";
 import { cn } from "@/lib/utils";
 import type { Category, Subcategory } from "@/lib/types";
 
@@ -429,15 +430,31 @@ function CategoryAccordionItem({
           variant="outline"), así que convive sin problema con el slide
           posicional de este <li>. */}
       <span ref={registerPillRef} className="inline-flex shrink-0">
-        <TagPill
-          tone="category"
-          variant="outline"
-          color={category.pill_color}
-          href={`/blog/categoria/${category.slug}`}
-          className="px-4 py-1 text-base"
-        >
-          {category.name}
-        </TagPill>
+        {/* Fondo sólido del color configurado en el admin SOLO mientras
+            esta es la categoría abierta (mostrando sus subcategorías) --
+            el resto del tiempo (y las demás pills principales) siguen con
+            el estilo outline de siempre, con el efecto de círculo en vez
+            del slide (ver CategoryPillCircleFill). Nunca hay más de una
+            pill principal "activa" (con fondo) a la vez. */}
+        {isOpen ? (
+          <TagPill
+            tone="category"
+            variant="solid"
+            color={category.pill_color}
+            href={`/blog/categoria/${category.slug}`}
+            className="border-2 px-4 py-1 text-base font-bold"
+          >
+            {category.name}
+          </TagPill>
+        ) : (
+          <CategoryPillCircleFill
+            color={category.pill_color}
+            href={`/blog/categoria/${category.slug}`}
+            className="px-4 py-1 text-base font-bold"
+          >
+            {category.name}
+          </CategoryPillCircleFill>
+        )}
       </span>
 
       {isOpen && subcategories.length > 0 && (
@@ -452,7 +469,7 @@ function CategoryAccordionItem({
                 key={sub.id}
                 tone="subcategory"
                 href={`/blog/categoria/${category.slug}/${sub.slug}`}
-                className="shrink-0 border-2 border-gray-100 bg-gray-100 px-4 py-1 text-[15px] font-normal text-gray-500 hover:border-gray-200 hover:bg-gray-200 hover:text-gray-600"
+                className="shrink-0 border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
               >
                 {sub.name}
               </TagPill>

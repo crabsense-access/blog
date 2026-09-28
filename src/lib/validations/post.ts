@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { normalizeWebsite } from "@/lib/validations/lead";
+
 export const postFaqFormSchema = z.object({
   question: z.string().min(1, "La pregunta no puede estar vacía."),
   answer: z.string().min(1, "La respuesta no puede estar vacía."),
@@ -28,6 +30,21 @@ export const postFormSchema = z.object({
 });
 
 export type PostFormValues = z.infer<typeof postFormSchema>;
+
+// Input del formulario de "Autocompletar con IA" de Nueva nota -- separado
+// de postFormSchema porque son campos previos a la generación (no todos los
+// campos de un post), con sus propios límites (máximo 2 subcategorías, igual
+// que se le pide al usuario en el mensaje de la UI).
+export const postGenerateInputSchema = z.object({
+  topic: z.string().min(5, "Contame de qué querés que trate la nota."),
+  category_id: z.string().uuid("Elegí una categoría principal."),
+  subcategory_ids: z
+    .array(z.string().uuid())
+    .min(1, "Elegí al menos una subcategoría.")
+    .max(2, "Como máximo 2 subcategorías."),
+});
+
+export type PostGenerateInputValues = z.infer<typeof postGenerateInputSchema>;
 
 export const categoryFormSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres."),
@@ -95,6 +112,16 @@ export type AuthorFormValues = z.infer<typeof authorFormSchema>;
 export const clientFormSchema = z.object({
   name: z.string().min(2, "Mínimo 2 caracteres."),
   row_number: z.coerce.number().int().min(1).max(3),
+  // Opcional: vacío = sin link. Se guarda normalizado con https://.
+  website_url: z
+    .string()
+    .trim()
+    .max(300)
+    .optional()
+    .refine((v) => !v || normalizeWebsite(v) !== null, {
+      message: "URL inválida (ej. empresa.com).",
+    })
+    .transform((v) => (v ? normalizeWebsite(v) : null)),
 });
 
 export type ClientFormValues = z.infer<typeof clientFormSchema>;
@@ -114,3 +141,11 @@ export const siteSettingsFormSchema = z.object({
 });
 
 export type SiteSettingsFormValues = z.infer<typeof siteSettingsFormSchema>;
+
+// Textos del hero de la home. Vacío = ese elemento no se muestra.
+export const heroSettingsFormSchema = z.object({
+  hero_pill_text: z.string().trim().max(60, "Máximo 60 caracteres.").optional(),
+  hero_title: z.string().trim().max(120, "Máximo 120 caracteres.").optional(),
+});
+
+export type HeroSettingsFormValues = z.infer<typeof heroSettingsFormSchema>;

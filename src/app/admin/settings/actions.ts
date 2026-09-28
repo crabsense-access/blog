@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { homeBannerFormSchema, profileFormSchema, siteSettingsFormSchema } from "@/lib/validations/post";
+import {
+  heroSettingsFormSchema,
+  homeBannerFormSchema,
+  profileFormSchema,
+  siteSettingsFormSchema,
+} from "@/lib/validations/post";
 
 export interface HomeBannerFormState {
   error?: string;
@@ -116,5 +121,40 @@ export async function updateSiteSettings(
   // El GTM ID se lee en el layout raíz (todo el sitio, admin incluido), así
   // que hace falta invalidar a nivel layout, no solo esta página.
   revalidatePath("/", "layout");
+  return {};
+}
+
+export interface HeroSettingsFormState {
+  error?: string;
+  fieldErrors?: Record<string, string[]>;
+}
+
+export async function updateHeroSettings(
+  _prevState: HeroSettingsFormState,
+  formData: FormData
+): Promise<HeroSettingsFormState> {
+  const parsed = heroSettingsFormSchema.safeParse({
+    hero_pill_text: formData.get("hero_pill_text") ?? "",
+    hero_title: formData.get("hero_title") ?? "",
+  });
+
+  if (!parsed.success) {
+    return { fieldErrors: parsed.error.flatten().fieldErrors };
+  }
+
+  const { hero_pill_text, hero_title } = parsed.data;
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .update({
+      hero_pill_text: hero_pill_text || null,
+      hero_title: hero_title || null,
+    })
+    .eq("id", true);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/");
   return {};
 }

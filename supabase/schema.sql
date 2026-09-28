@@ -220,6 +220,12 @@ insert into public.site_settings (id) values (true) on conflict (id) do nothing;
 -- real en supabase/migrations/20260918000000_site_settings_gtm_id.sql.
 alter table public.site_settings add column if not exists gtm_id text;
 
+-- Textos del hero de la home (pill + titular), editables desde /admin/settings.
+-- Migración real en supabase/migrations/20260927000000_site_settings_hero_texts.sql.
+alter table public.site_settings
+  add column if not exists hero_pill_text text default 'Agencia de marketing digital con IA',
+  add column if not exists hero_title text default 'Esto es una prueba desde el admin';
+
 drop trigger if exists site_settings_set_updated_at on public.site_settings;
 create trigger site_settings_set_updated_at
   before update on public.site_settings
@@ -238,6 +244,9 @@ create table if not exists public.client_logos (
   created_at timestamptz not null default now()
 );
 create index if not exists client_logos_row_number_idx on public.client_logos (row_number, sort_order);
+-- URL del sitio del cliente (opcional). Migración real en
+-- supabase/migrations/20260927000002_client_logos_website_url.sql.
+alter table public.client_logos add column if not exists website_url text;
 
 -- ============ Row Level Security ============
 alter table public.profiles enable row level security;

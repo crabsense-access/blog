@@ -27,6 +27,7 @@ export default async function AdminClientsPage() {
           <TableRow>
             <TableHead>Logo</TableHead>
             <TableHead>Nombre</TableHead>
+            <TableHead>Sitio web</TableHead>
             <TableHead>Fila</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
           </TableRow>
@@ -43,6 +44,20 @@ export default async function AdminClientsPage() {
                 />
               </TableCell>
               <TableCell>{client.name}</TableCell>
+              <TableCell className="max-w-56 truncate text-muted-foreground">
+                {client.website_url ? (
+                  <a
+                    href={client.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {client.website_url.replace(/^https?:\/\//, "")}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </TableCell>
               <TableCell className="text-muted-foreground">Fila {client.row_number}</TableCell>
               <TableCell className="flex justify-end gap-1">
                 <ClientDialog client={client} />
@@ -52,7 +67,7 @@ export default async function AdminClientsPage() {
           ))}
           {clients.length === 0 && (
             <TableRow>
-              <TableCell colSpan={4} className="text-center text-muted-foreground">
+              <TableCell colSpan={5} className="text-center text-muted-foreground">
                 Todavía no hay clientes cargados. Mientras tanto, la home muestra logos
                 placeholder.
               </TableCell>
