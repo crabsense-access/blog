@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { ArrowUpRight, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,21 +13,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const NAV_LINKS = [
-  { href: "/", label: "Inicio" },
+  // Ancla a "Nuestros servicios" de la home (scroll suave)
+  { href: "/#servicios", label: "Servicios" },
+  { href: "/#casos", label: "Casos de éxito" },
   { href: "/blog", label: "Blog" },
-  { href: "/glosario", label: "Glosario" },
 ];
 
-// Px de scroll a partir de los cuales el header deja de ser transparente.
-const SCROLLED_THRESHOLD = 8;
-
 export function SiteHeader() {
-  // En la home el header arranca transparente sobre el hero oscuro y pasa a
-  // blanco apenas se scrollea (cuando queda "pegado" como sticky).
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [scrolled, setScrolled] = useState(false);
-  const transparent = isHome && !scrolled;
   const headerRef = useRef<HTMLElement>(null);
 
   // Expone el alto real del header como variable CSS, para que otros
@@ -48,57 +41,51 @@ export function SiteHeader() {
     return () => observer.disconnect();
   }, []);
 
-  // Offset para bloques sticky que van pegados debajo del header (ej.
-  // PostCategoriesStickyNav). El header ahora es siempre visible, así que
-  // es siempre su alto real.
+  // El header ya no es sticky (se va con el scroll), así que los bloques
+  // sticky de la página (ej. PostCategoriesStickyNav) se pegan arriba de todo.
   useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--site-header-offset",
-      "var(--site-header-height, 4.5rem)"
-    );
+    document.documentElement.style.setProperty("--site-header-offset", "0px");
   }, []);
 
-  // Solo detecta si la página está scrolleada (para el fondo blanco y la
-  // línea de abajo). El header ya no se esconde nunca: queda siempre fijo.
-  useEffect(() => {
-    function handleScroll() {
-      setScrolled(window.scrollY > SCROLLED_THRESHOLD);
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    // estado inicial (ej. si la página carga ya scrolleada)
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // En la home, los links con ancla ("/#servicios") hacen scroll suave
+  // hasta la sección sin recargar; desde otras páginas navegan a la home y
+  // bajan a la sección.
+  function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (!isHome || !href.startsWith("/#")) return;
+    const target = document.getElementById(href.slice(2));
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState(null, "", href);
+  }
 
   return (
     <header
       ref={headerRef}
-      className={cn(
-        "border-b sticky top-0 z-50 transition-[background-color,border-color] duration-300 ease-in-out",
-        // sin línea abajo al inicio; aparece apenas se empieza a scrollear
-        scrolled ? "border-neutral-200" : "border-transparent",
-        transparent ? "bg-transparent" : "bg-white"
-      )}
+      // Header transparente y no fijo: se superpone al hero (que sube por
+      // debajo con margen negativo) y se va con el scroll.
+      className="relative z-50 bg-transparent px-4 md:px-10"
     >
-      <div className="max-w-[108rem] mx-auto px-10">
-        <div className="flex max-w-7xl mx-auto items-center justify-between py-4">
+      <div className="mx-auto max-w-7xl">
+        <div className="flex items-center justify-between py-4">
           {/* Logo */}
           <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
             {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos, ver post-image.tsx */}
             <img
               src="/crabsense-logo.svg"
               alt="Crabsense"
-              className="h-11 w-auto"
+              className="h-10 w-auto"
             />
           </Link>
 
           {/* Navigation */}
-          <nav className="hidden md:flex gap-8">
+          <nav className="hidden md:flex gap-12">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                onClick={(e) => handleAnchorClick(e, link.href)}
+                className="text-[0.8rem] font-bold uppercase tracking-wide text-slate-600 hover:text-slate-900 transition-colors"
               >
                 {link.label}
               </Link>
@@ -107,8 +94,15 @@ export function SiteHeader() {
 
           <div className="flex items-center gap-2">
             {/* CTA Button */}
-            <Button asChild className="bg-blue-600 hover:bg-blue-700">
-              <Link href="/contacto">Contactar</Link>
+            {/* Pill en el violeta del servicio Analytics (#53539b) con flecha a 45° */}
+            <Button
+              asChild
+              className="group h-auto rounded-full bg-[#53539b] py-3.5 pl-9 pr-8 has-[>svg]:pl-9 has-[>svg]:pr-8 text-[0.8rem] uppercase tracking-wide hover:bg-[#3d3c89]"
+            >
+              <Link href="/#contacto" onClick={(e) => handleAnchorClick(e, "/#contacto")}>
+                Contactar
+                <ArrowUpRight className="size-4.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </Link>
             </Button>
 
             {/* Mobile Navigation */}
@@ -117,7 +111,7 @@ export function SiteHeader() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className={cn("md:hidden", transparent && "bg-white/60")}
+                  className="size-11 rounded-full bg-white/60 md:hidden"
                 >
                   <Menu className="size-5" />
                   <span className="sr-only">Abrir menú</span>
@@ -126,7 +120,13 @@ export function SiteHeader() {
               <DropdownMenuContent align="end">
                 {NAV_LINKS.map((link) => (
                   <DropdownMenuItem key={link.href} asChild>
-                    <Link href={link.href}>{link.label}</Link>
+                    <Link
+                      href={link.href}
+                      onClick={(e) => handleAnchorClick(e, link.href)}
+                      className="font-bold uppercase tracking-wide"
+                    >
+                      {link.label}
+                    </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

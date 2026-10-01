@@ -3,6 +3,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { CutoutImage } from "@/components/site/cutout-image";
+import { FadingStickyTitle } from "@/components/site/fading-sticky-title";
 import { HeroPromptBox } from "@/components/site/hero-prompt-box";
 import { HeroSolaris } from "@/components/site/hero-solaris";
 import { TagPill } from "@/components/site/tag-pill";
@@ -265,14 +266,23 @@ export function ServicesStickySection({
   images?: Record<string, ServiceImage>;
 }) {
   return (
-    <section aria-labelledby="servicios-title" className="pt-24 pb-12">
+    <section
+      id="servicios"
+      aria-labelledby="servicios-title"
+      // scroll-mt: el ancla "Servicios" del menú aterriza justo donde
+      // arranca el sticky del título (título pegado debajo del header).
+      // = alto del header - padding superior de la sección (pt-24 = 6rem).
+      className="scroll-mt-[calc(var(--site-header-height,77px)-6rem)] pt-24 pb-12"
+    >
       <div className="mx-auto max-w-[108rem] px-10">
         {/* El título queda fijo solo durante los primeros TITLE_STICKY_BLOCKS
             bloques: vive en este contenedor junto con ellos, y el sticky se
             suelta cuando el contenedor termina. */}
         <div>
-          <h2
+          <FadingStickyTitle
             id="servicios-title"
+            // se va junto con el último servicio cuando este empieza a irse
+            followTargetId={`servicio-${SERVICES[SERVICES.length - 1].id}`}
             // Sticky (debajo del header) mientras pasan los primeros bloques
             // de servicios. Fondo blanco a todo el ancho para que el
             // contenido pase por detrás.
@@ -280,7 +290,7 @@ export function ServicesStickySection({
           >
             Nuestros servicios{" "}
             <span className="font-extralight text-neutral-400">apoyados con IA</span>
-          </h2>
+          </FadingStickyTitle>
 
           {SERVICES.slice(0, TITLE_STICKY_BLOCKS).map((service) => (
             <ServiceBlock
@@ -306,8 +316,9 @@ export function ServicesStickySection({
 }
 
 // cantidad de bloques de servicio durante los que "Nuestros servicios"
-// queda fijo arriba
-const TITLE_STICKY_BLOCKS = 2;
+// queda fijo arriba: todos. Cuando el último empieza a irse, el título se
+// va con él (FadingStickyTitle).
+const TITLE_STICKY_BLOCKS = SERVICES.length;
 
 // offset vertical de las cards apiladas: debajo del header (+ el título fijo
 // en los bloques que lo tienen arriba) + un margen, y cada card un poco más
@@ -315,11 +326,6 @@ const TITLE_STICKY_BLOCKS = 2;
 const STACK_BASE_UNDER_TITLE = "var(--site-header-height,77px) + 7rem";
 const STACK_BASE = "var(--site-header-height,77px) + 2.5rem";
 const STACK_STEP_REM = 0.5;
-
-// Por el momento los bloques muestran solo el anillo animado, sin imagen.
-// Para volver a mostrar la imagen del admin (o la estatua de respaldo),
-// cambiar a true.
-const SHOW_SERVICE_IMAGES = false;
 
 function ServiceBlock({
   service,
@@ -345,6 +351,7 @@ function ServiceBlock({
           una pregunta del servicio. En escritorio ocupa el alto de la
           pantalla: el prompt toma su alto y la imagen el resto. */}
       <div
+        data-sticky-col
         className={cn(
           "lg:sticky lg:flex lg:min-h-[36rem] lg:flex-col lg:self-start lg:pl-10 lg:pr-12 xl:pl-20",
           underTitle
@@ -372,23 +379,23 @@ function ServiceBlock({
             fixedAnchor
           />
           {/* Imagen cargada en /admin/services (si viene con fondo blanco,
-              CutoutImage se lo quita). Sin imagen cargada, la estatua del hero. */}
-          {!SHOW_SERVICE_IMAGES ? null : image?.image_url ? (
+              CutoutImage se lo quita). Apoyada en el borde inferior del
+              área (no invade el espacio del prompt) y como máximo llega
+              arriba hasta la altura de la pill del servicio.
+              Sin imagen cargada, solo el anillo. */}
+          {image?.image_url && (
             <CutoutImage
               src={image.image_url}
               alt={image.image_alt ?? service.name}
-              className="pointer-events-none absolute left-1/2 top-1/2 z-[5] h-[102%] w-[108%] -translate-x-1/2 -translate-y-1/2 select-none object-contain drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]"
-            />
-          ) : (
-            // eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos
-            <img
-              src="/hero-estatua.webp"
-              alt="Estatua romana sentada usando un smartphone y auriculares"
-              width={656}
-              height={1175}
-              loading="lazy"
-              decoding="async"
-              className="pointer-events-none absolute left-1/2 top-1/2 z-[5] h-[102%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 select-none drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]"
+              className={cn(
+                "pointer-events-none absolute bottom-0 left-1/2 z-[5] h-[90%] w-[110%] -translate-x-1/2 select-none object-contain object-bottom drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]",
+                // Analytics (Coliseo): un poco más grande, creciendo desde la base
+                service.id === "analytics" && "origin-bottom scale-[1.10]",
+                // ADS (catapulta): un poco más grande, creciendo desde la base
+                service.id === "ads" && "origin-bottom scale-[1.15]",
+                // SEO & GEO: un poco más grande, creciendo desde la base
+                service.id === "seo" && "origin-bottom scale-[1.15]",
+              )}
             />
           )}
         </div>
@@ -397,7 +404,8 @@ function ServiceBlock({
           {service.name}
         </h3>
         <HeroPromptBox
-          className="relative z-10 mt-6 shrink-0 lg:mt-4"
+          // Con imagen cargada (hoy ADS), más aire entre la imagen y el prompt
+          className={cn("relative z-10 mt-6 shrink-0", image?.image_url ? "lg:mt-6" : "lg:mt-4")}
           headingAs="h4"
           transparent
           questionClassName="font-bold"
@@ -431,7 +439,7 @@ function ServiceBlock({
               </span>
               <QuoteMark
                 color={service.color}
-                className="pointer-events-none -mr-2 w-12 shrink-0 md:-mr-4 md:w-14"
+                className="pointer-events-none -mr-2 w-14 shrink-0 md:-mr-4 md:w-[4.5rem]"
               />
             </div>
             <h4 className="mt-3 font-heading text-[1.75rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2rem]">
@@ -478,7 +486,7 @@ function QuoteMark({ color, className }: { color: string; className?: string }) 
   const glyph =
     "M5 0H35a5 5 0 0 1 5 5V50C40 67 31 78 16 80a3 3 0 0 1-3.2-3V72.6a3 3 0 0 1 2.6-3C22.5 68.2 27 62.5 27 55V40H5a5 5 0 0 1-5-5V5a5 5 0 0 1 5-5Z";
   return (
-    <svg viewBox="0 0 96 80" aria-hidden className={className} fill={color} fillOpacity={0.09}>
+    <svg viewBox="0 0 96 80" aria-hidden className={className} fill={color} fillOpacity={0.2}>
       <path d={glyph} />
       <path d={glyph} transform="translate(56 0)" />
     </svg>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon, BookOpenIcon, BriefcaseIcon } from "lucide-react";
+import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon, BookOpenIcon, BriefcaseIcon, TrophyIcon } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/admin/authors", label: "Autores", icon: UsersIcon },
   { href: "/admin/clients", label: "Clientes", icon: Building2Icon },
   { href: "/admin/services", label: "Servicios", icon: BriefcaseIcon },
+  { href: "/admin/casos", label: "Casos de éxito", icon: TrophyIcon },
   { href: "/admin/settings", label: "Configuración", icon: SettingsIcon },
 ];
 

@@ -40,6 +40,7 @@ export function HeroPromptBox({
   fitReference,
   questionClassName,
   showQuestion = true,
+  minInputHeight = 48,
 }: {
   className?: string;
   // Si la home ya tiene un titular (h1) configurado desde el admin, esta
@@ -62,6 +63,8 @@ export function HeroPromptBox({
   questionClassName?: string;
   /** false = sin la pregunta de arriba (ej. cuando la sección ya tiene título) */
   showQuestion?: boolean;
+  /** alto mínimo (px) del área donde se escribe el prompt */
+  minInputHeight?: number;
 }) {
   const [step, setStep] = useState<Step>("prompt");
   const [message, setMessage] = useState("");
@@ -117,8 +120,8 @@ export function HeroPromptBox({
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
-  }, [message]);
+    el.style.height = `${Math.min(el.scrollHeight, Math.max(168, minInputHeight))}px`;
+  }, [message, minInputHeight]);
 
   // cerrar el menú al hacer click afuera o con Esc
   useEffect(() => {
@@ -283,6 +286,7 @@ export function HeroPromptBox({
                 }
               }}
               placeholder={placeholder}
+              style={{ minHeight: minInputHeight }}
               className="block min-h-[48px] w-full resize-none bg-transparent px-2 py-2 text-base text-neutral-950 placeholder:text-neutral-400 focus:outline-none"
             />
             <div className="mt-1 flex items-center justify-between">

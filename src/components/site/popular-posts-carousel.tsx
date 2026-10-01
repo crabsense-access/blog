@@ -22,6 +22,10 @@ interface PopularPostsCarouselProps {
   // Elemento opcional alineado a la derecha, a la altura del título
   // (ej. una pill "Ver más artículos").
   action?: React.ReactNode;
+  // false = sin el fondo gris a todo el ancho (ej. en la home del sitio)
+  background?: boolean;
+  // false = sin el bloque promocional de Instagram (solo artículos)
+  showPromo?: boolean;
 }
 
 const SCROLL_AMOUNT = 600;
@@ -31,17 +35,25 @@ type CarouselItem =
   | { type: "post"; post: PostWithRelations }
   | { type: "promo" };
 
-export function PopularPostsCarousel({ posts, title = "Más vistos", action }: PopularPostsCarouselProps) {
+export function PopularPostsCarousel({
+  posts,
+  title = "Más vistos",
+  action,
+  background = true,
+  showPromo = true,
+}: PopularPostsCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(posts.length > 0);
   const [hasOverflow, setHasOverflow] = useState(false);
 
-  const items: CarouselItem[] = [
-    ...posts.slice(0, PROMO_INSERT_INDEX).map((post) => ({ type: "post" as const, post })),
-    { type: "promo" as const },
-    ...posts.slice(PROMO_INSERT_INDEX).map((post) => ({ type: "post" as const, post })),
-  ];
+  const items: CarouselItem[] = showPromo
+    ? [
+        ...posts.slice(0, PROMO_INSERT_INDEX).map((post) => ({ type: "post" as const, post })),
+        { type: "promo" as const },
+        ...posts.slice(PROMO_INSERT_INDEX).map((post) => ({ type: "post" as const, post })),
+      ]
+    : posts.map((post) => ({ type: "post" as const, post }));
 
   function updateScrollState() {
     const el = scrollRef.current;
@@ -61,7 +73,9 @@ export function PopularPostsCarousel({ posts, title = "Más vistos", action }: P
 
   return (
     <section className={cn(CAROUSEL_SECTION_CLASS, "relative z-0 pt-24 pb-24")}>
-      <div className="absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-gray-50" />
+      {background && (
+        <div className="absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 bg-gray-50" />
+      )}
       <div className={CAROUSEL_HEADER_WRAPPER_CLASS}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
           <div />

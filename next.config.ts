@@ -9,6 +9,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : undefined;
 
 const nextConfig: NextConfig = {
+  // Los formularios del admin suben imágenes por Server Actions (hasta 5MB
+  // cada una, ver src/lib/storage.ts). El límite por defecto de Next es
+  // 1MB por request, y el form de casos de éxito puede mandar dos imágenes
+  // (fondo + logo), así que se sube a 12MB.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "12mb",
+    },
+  },
   images: {
     remotePatterns: supabaseHostname
       ? [

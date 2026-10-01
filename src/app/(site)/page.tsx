@@ -1,42 +1,42 @@
 import Link from "next/link";
 import { HeroSolaris } from "@/components/site/hero-solaris";
 import { HeroPromptBox } from "@/components/site/hero-prompt-box";
+import { HeroAurora } from "@/components/site/hero-aurora";
 import { TagPill } from "@/components/site/tag-pill";
 import { ServicesStickySection } from "@/components/site/services-sticky-section";
 import { HeroClientLogos } from "@/components/site/hero-client-logos";
 import { getPublicClients } from "@/lib/queries/clients";
 import { getPopularPosts } from "@/lib/queries/posts";
 import { getPublicServiceImages } from "@/lib/queries/service-images";
+import { getPublicSuccessCases } from "@/lib/queries/success-cases";
+import { SuccessCasesSection } from "@/components/site/success-cases-section";
 import { PopularPostsCarousel } from "@/components/site/popular-posts-carousel";
 import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [{ hero_pill_text, hero_title }, clients, popularPosts, serviceImages] = await Promise.all([
+  const [{ hero_pill_text, hero_title }, clients, popularPosts, serviceImages, successCases] = await Promise.all([
     getPublicSiteSettings(),
     getPublicClients(),
     // Mismos "Más vistos" que la home del blog (posts marcados como populares)
-    getPopularPosts([], 6).catch(() => []),
+    getPopularPosts([], 7).catch(() => []),
     getPublicServiceImages(),
+    getPublicSuccessCases(),
   ]);
 
   return (
     <main className="min-h-screen bg-white">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-white text-neutral-950 h-[100svh] min-h-[600px] -mt-[var(--site-header-height,69px)] flex items-center lg:items-stretch">
-        {/* Fondo gris de la columna derecha (estatua + anillo), solo en escritorio.
-            Mismo alto que la columna izquierda: arranca debajo del header y
-            termina a max(4svh, 24px) del fondo, con 40px de margen lateral. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute bottom-[max(4svh,24px)] left-[calc(55vw+2.5rem)] right-10 top-[calc(var(--site-header-height,69px)+max(4svh,24px))] hidden rounded-[32px] bg-neutral-50 lg:block"
-        />
+        {/* Manchas difuminadas (colores oscuros del logo) que se mueven al
+            azar por el 100% del hero. */}
+        <HeroAurora className="absolute inset-0 h-full w-full" />
         {/* Solo el anillo animado detrás de la estatua; las capas de fondo
             (aurora, halo, grilla, viñeta) quedan apagadas por ahora → hero en
             blanco. Para volver a activarlas, sacar background={false}. */}
         <HeroSolaris anchorX={0.775} anchorY={0.55} background={false} />
-        {/* Estatua: en escritorio, centrada (horizontal y vertical) en el bloque gris
+        {/* Estatua: en escritorio, centrada (horizontal y vertical) en la columna
             de la derecha: x = 77.5% (centro de la columna de 45vw), y = punto medio
             entre el borde inferior del header y el fondo del hero. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos */}
@@ -70,7 +70,7 @@ export default async function HomePage() {
                 </TagPill>
               )}
               {hero_title && (
-                <h1 className="mb-14 text-balance font-heading text-6xl font-normal leading-[1.05] tracking-tight text-[#4a4a4a] md:text-7xl">
+                <h1 className="mb-14 text-balance font-heading text-6xl font-normal leading-[1.05] tracking-[-0.04em] text-[#4a4a4a] md:text-7xl">
                   {hero_title}
                 </h1>
               )}
@@ -89,6 +89,9 @@ export default async function HomePage() {
       {/* Nuestros servicios: columna izquierda sticky + 4 tarjetas que pasan */}
       <ServicesStickySection images={serviceImages} />
 
+      {/* Casos de éxito (admin: /admin/casos): cards a todo el ancho */}
+      <SuccessCasesSection cases={successCases} />
+
       {/* Más vistos: misma sección que la home del blog, con el mismo
           contenedor (max-w-[108rem] px-10) que usa el carrusel para
           alinear el título y las flechas */}
@@ -96,6 +99,8 @@ export default async function HomePage() {
         <div className="max-w-[108rem] mx-auto px-10">
           <PopularPostsCarousel
             posts={popularPosts}
+            background={false}
+            showPromo={false}
             title={
               <>
                 <Link
@@ -126,14 +131,32 @@ export default async function HomePage() {
         </div>
       )}
 
-      {/* CTA final: fondo gris claro y el mismo bloque de prompt del hero
-          para que nos contacten */}
-      <section className="bg-neutral-100 py-16 text-[#4a4a4a] md:py-24">
-        <div className="mx-auto max-w-[108rem] px-10">
-          <h2 className="mb-10 text-center font-heading text-3xl tracking-tight md:text-4xl">
+      {/* CTA final: fondo gris claro, el prompt del hero para que nos
+          contacten y, bien grande por detrás del prompt, el anillo animado de
+          colores del hero. */}
+      <section
+        id="contacto"
+        // ancla del botón "Contactar" del header
+        className="relative scroll-mt-[var(--site-header-height,77px)] overflow-hidden bg-neutral-100 py-32 text-[#4a4a4a] md:py-44"
+      >
+        <HeroSolaris
+          anchorX={0.5}
+          anchorY={0.5}
+          size={0.38}
+          background={false}
+          scrollExplode={false}
+          fixedAnchor
+        />
+        <div className="relative z-10 mx-auto max-w-[108rem] px-10">
+          <h2 className="mb-10 text-center font-heading text-4xl leading-tight tracking-tight md:text-[3.5rem]">
             ¿Listo para transformar tu negocio?
           </h2>
-          <HeroPromptBox headingAs="h3" showQuestion={false} className="mx-auto max-w-2xl" />
+          <HeroPromptBox
+            headingAs="h3"
+            showQuestion={false}
+            minInputHeight={140}
+            className="mx-auto max-w-2xl"
+          />
         </div>
       </section>
     </main>
