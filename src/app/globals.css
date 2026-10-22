@@ -124,6 +124,13 @@
   html {
     scroll-behavior: smooth;
   }
+  /* Evita el scroll/espacio horizontal en mobile cuando algún elemento
+     decorativo (aurora, anillos, imágenes de servicios) se pasa del ancho.
+     "clip" (no "hidden") para no romper los elementos sticky. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;

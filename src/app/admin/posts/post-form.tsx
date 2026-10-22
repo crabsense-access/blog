@@ -21,7 +21,9 @@ import { slugify } from "@/lib/slugify";
 import { useSuccessToast } from "@/lib/use-success-toast";
 import { MarkdownContent } from "@/components/site/markdown-content";
 import type { Category, PostFaq, PostWithRelations, Profile, Subcategory } from "@/lib/types";
+import type { NewsItem, RelatedLink } from "@/lib/radar-types";
 import { generatePostContent, type GeneratePostContentState, type PostFormState } from "./actions";
+import { RadarPicker, RadarPickerHeading } from "./radar-picker";
 
 interface PostFormProps {
   categories: Category[];
@@ -29,7 +31,22 @@ interface PostFormProps {
   authors: Profile[];
   post?: PostWithRelations;
   defaultAuthorId?: string;
+  /** novedades del radar (últimos 7 días) para partir de una al crear la nota */
+  newsItems?: NewsItem[];
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
+}
+
+// Categoría del blog que corresponde a cada servicio del radar (por slug o
+// nombre). Si no encuentra ninguna, no toca la categoría elegida.
+const SERVICE_CATEGORY_RE: Record<NewsItem["service"], RegExp> = {
+  seo: /seo|geo/i,
+  ads: /ads|paid|pauta|publicidad/i,
+  analytics: /analytic|ga4|medici/i,
+  ia: /(^|[^a-z])ia([^a-z]|$)|inteligencia|^ai$/i,
+};
+function categoryForService(categories: Category[], service: NewsItem["service"]) {
+  const re = SERVICE_CATEGORY_RE[service];
+  return categories.find((c) => re.test(c.slug) || re.test(c.name)) ?? null;
 }
 
 const initialState: PostFormState = {};
@@ -42,6 +59,7 @@ export function PostForm({
   authors,
   post,
   defaultAuthorId,
+  newsItems = [],
   action,
 }: PostFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -58,6 +76,21 @@ export function PostForm({
     initialGenerateState
   );
   const [topic, setTopic] = useState("");
+  const [newsItem, setNewsItem] = useState<NewsItem | null>(null);
+  const [newsLinks, setNewsLinks] = useState<RelatedLink[]>([]);
+
+  function selectNewsItem(item: NewsItem | null) {
+    setNewsItem(item);
+    setNewsLinks(item?.related_links ?? []);
+    if (!item) return;
+    // el tema arranca con el título de la novedad (se puede ajustar el enfoque)
+    setTopic(item.title);
+    const cat = categoryForService(categories, item.service);
+    if (cat && cat.id !== categoryId) {
+      setCategoryId(cat.id);
+      setSelectedSubcategories(new Set());
+    }
+  }
 
   const [slugTouched, setSlugTouched] = useState(Boolean(post));
   const [title, setTitle] = useState(post?.title ?? "");
@@ -144,8 +177,26 @@ export function PostForm({
         // cadena, selectedSubcategories) justo cuando termina de generar.
         // Por eso este bloque arma el FormData a mano y llama a
         // genFormAction directamente desde el onClick del botón.
-        <div className="grid gap-4 rounded-lg border p-4">
-          <p className="text-sm font-semibold">Autocompletar con IA</p>
+        <div className="grid gap-5 rounded-lg border p-4">
+          <div className="grid gap-1">
+            <p className="text-sm font-semibold">Generar con IA</p>
+            <p className="text-xs text-muted-foreground">
+              Partí de una novedad del radar (opcional), sumale referentes y generá la nota completa.
+            </p>
+          </div>
+
+          <div className="grid gap-2">
+            <RadarPickerHeading />
+            <RadarPicker
+              items={newsItems}
+              selectedId={newsItem?.id ?? null}
+              links={newsLinks}
+              onSelect={selectNewsItem}
+              onLinksChange={setNewsLinks}
+            />
+          </div>
+
+          <p className="-mb-3 text-sm font-semibold">2 · Categoría y tema</p>
 
           <div className="grid gap-2">
             <Label htmlFor="gen-category">Categoría principal</Label>
@@ -193,13 +244,19 @@ export function PostForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="topic">Tema / idea para la nota</Label>
+            <Label htmlFor="topic">{newsItem ? "Enfoque de la nota" : "Tema / idea para la nota"}</Label>
             <Input
               id="topic"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               placeholder="Ej: cómo usar IA para detectar anomalías de tráfico en GA4"
             />
+            {newsItem && (
+              <p className="text-xs text-muted-foreground">
+                Arranca con el título de la novedad: podés cambiarlo para darle otro ángulo. La IA usa la novedad y
+                {newsLinks.length ? ` sus ${newsLinks.length + 1} fuentes` : " su fuente oficial"} como base.
+              </p>
+            )}
           </div>
 
           {genState.error && <p className="text-sm text-destructive">{genState.error}</p>}
@@ -214,6 +271,7 @@ export function PostForm({
                 formData.set("topic", topic);
                 formData.set("category_id", categoryId);
                 selectedSubcategories.forEach((id) => formData.append("subcategory_ids", id));
+                if (newsItem) formData.set("news_item_id", newsItem.id);
                 // startTransition es obligatorio: llamar a un dispatcher de
                 // useActionState fuera de una transition ya no funciona en
                 // silencio (React tira "called outside of a transition" y
@@ -229,7 +287,7 @@ export function PostForm({
               ) : (
                 <SparklesIcon className="size-4" />
               )}
-              {genPending ? "Generando..." : "Autocompletar con IA"}
+              {genPending ? "Generando..." : "Generar con IA"}
             </Button>
             {genPending && (
               <p className="text-sm text-muted-foreground">

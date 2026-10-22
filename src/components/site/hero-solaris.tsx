@@ -113,6 +113,8 @@ export function HeroSolaris({
   scrollExplode = true,
   stars: showStars = true,
   fixedAnchor = false,
+  mobileAnchorY,
+  mobileSize,
 }: {
   className?: string;
   /** "light" = fondo blanco (default) · "dark" = fondo oscuro */
@@ -133,6 +135,11 @@ export function HeroSolaris({
   stars?: boolean;
   /** true = usa anchorX/anchorY siempre (no solo en canvas >= 1024px) */
   fixedAnchor?: boolean;
+  /** altura del centro (fracción del alto) en canvas < 1024px (0.62 por
+   *  defecto). Con fixedAnchor, si se pasa, se usa en canvas < 768px. */
+  mobileAnchorY?: number;
+  /** radio en canvas < 768px (por defecto, el mismo que `size`) */
+  mobileSize?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -304,9 +311,14 @@ export function HeroSolaris({
 
       const desktop = fixedAnchor || w >= 1024;
       const cx = desktop ? w * anchorX : w * 0.5;
-      const cy = desktop ? h * anchorY : h * 0.62;
+      const cy = !desktop
+        ? h * (mobileAnchorY ?? 0.62)
+        : w < 768 && mobileAnchorY !== undefined
+          ? h * mobileAnchorY
+          : h * anchorY;
       const breath = 1 + 0.025 * Math.sin(time * 0.9);
-      const R = Math.min(w, h) * size * breath;
+      const r = w < 768 && mobileSize ? mobileSize : size;
+      const R = Math.min(w, h) * r * breath;
       lastCx = cx;
       lastCy = cy;
       lastR = R;
@@ -544,7 +556,7 @@ export function HeroSolaris({
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerleave", onLeave);
     };
-  }, [theme, anchorX, anchorY, size, color, scrollExplode, showStars, fixedAnchor]);
+  }, [theme, anchorX, anchorY, size, color, scrollExplode, showStars, fixedAnchor, mobileAnchorY, mobileSize]);
 
   return (
     <div

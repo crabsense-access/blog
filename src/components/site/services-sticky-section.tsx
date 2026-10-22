@@ -5,18 +5,12 @@ import { cn } from "@/lib/utils";
 import { CutoutImage } from "@/components/site/cutout-image";
 import { FadingStickyTitle } from "@/components/site/fading-sticky-title";
 import { HeroPromptBox } from "@/components/site/hero-prompt-box";
+import { HeroAurora } from "@/components/site/hero-aurora";
 import { HeroSolaris } from "@/components/site/hero-solaris";
+import { StackShade } from "@/components/site/stack-shade";
 import { TagPill } from "@/components/site/tag-pill";
 import type { LeadService } from "@/lib/validations/lead";
-import type { ServiceImage } from "@/lib/services";
-
-interface ServiceIssue {
-  /** el dolor de cabeza, en palabras del cliente */
-  title: string;
-  description: string;
-  /** cómo lo resolvemos */
-  help: string[];
-}
+import type { ServiceImage, ServiceIssue } from "@/lib/services";
 
 interface Service {
   id: string;
@@ -32,7 +26,9 @@ interface Service {
   issues: ServiceIssue[];
 }
 
-// Contenido fijo por ahora (se puede mover al admin más adelante).
+// Contenido fijo de cada servicio. Los "issues" (problemas) se editan desde
+// /admin/services (tabla service_issues); los de acá quedan como respaldo si
+// la tabla no existe o un servicio no tiene problemas cargados.
 // Orden: Analytics, SEO & GEO, ADS; el resto de los servicios se suman acá.
 const SERVICES: Service[] = [
   {
@@ -261,10 +257,17 @@ const SERVICES: Service[] = [
  */
 export function ServicesStickySection({
   images = {},
+  issues = {},
 }: {
   /** imágenes cargadas desde /admin/services, por slug */
   images?: Record<string, ServiceImage>;
+  /** problemas cargados desde /admin/services, por slug */
+  issues?: Record<string, ServiceIssue[]>;
 }) {
+  // issues del admin si hay; si no, los del código
+  const services = SERVICES.map((s) =>
+    issues[s.id]?.length ? { ...s, issues: issues[s.id] } : s
+  );
   return (
     <section
       id="servicios"
@@ -272,9 +275,9 @@ export function ServicesStickySection({
       // scroll-mt: el ancla "Servicios" del menú aterriza justo donde
       // arranca el sticky del título (título pegado debajo del header).
       // = alto del header - padding superior de la sección (pt-24 = 6rem).
-      className="scroll-mt-[calc(var(--site-header-height,77px)-6rem)] pt-24 pb-12"
+      className="scroll-mt-[calc(var(--site-header-height,77px)-6rem)] pt-12 pb-2 md:pb-12 md:pt-24"
     >
-      <div className="mx-auto max-w-[108rem] px-10">
+      <div className="mx-auto max-w-[108rem] px-6 md:px-10">
         {/* El título queda fijo solo durante los primeros TITLE_STICKY_BLOCKS
             bloques: vive en este contenedor junto con ellos, y el sticky se
             suelta cuando el contenedor termina. */}
@@ -286,13 +289,13 @@ export function ServicesStickySection({
             // Sticky (debajo del header) mientras pasan los primeros bloques
             // de servicios. Fondo blanco a todo el ancho para que el
             // contenido pase por detrás.
-            className="z-20 mb-4 bg-white/95 px-4 py-3 text-center font-heading text-[2.5rem] font-normal leading-tight tracking-tight text-[#4a4a4a] backdrop-blur lg:sticky lg:top-[var(--site-header-height,77px)] lg:ml-[calc(50%-50vw)] lg:w-screen"
+            className="z-20 mb-4 bg-white/95 px-4 py-3 text-center font-heading text-[2.125rem] font-normal md:text-[2.5rem] leading-tight tracking-tight text-[#4a4a4a] backdrop-blur lg:sticky lg:top-[var(--site-header-height,77px)] lg:ml-[calc(50%-50vw)] lg:w-screen"
           >
             Nuestros servicios{" "}
             <span className="font-extralight text-neutral-400">apoyados con IA</span>
           </FadingStickyTitle>
 
-          {SERVICES.slice(0, TITLE_STICKY_BLOCKS).map((service) => (
+          {services.slice(0, TITLE_STICKY_BLOCKS).map((service) => (
             <ServiceBlock
               key={service.id}
               service={service}
@@ -303,7 +306,7 @@ export function ServicesStickySection({
         </div>
 
         {/* El resto de los servicios, ya sin el título fijo arriba */}
-        {SERVICES.slice(TITLE_STICKY_BLOCKS).map((service) => (
+        {services.slice(TITLE_STICKY_BLOCKS).map((service) => (
           <ServiceBlock
             key={service.id}
             service={service}
@@ -326,6 +329,9 @@ const TITLE_STICKY_BLOCKS = SERVICES.length;
 const STACK_BASE_UNDER_TITLE = "var(--site-header-height,77px) + 7rem";
 const STACK_BASE = "var(--site-header-height,77px) + 2.5rem";
 const STACK_STEP_REM = 0.5;
+// Servicios que en mobile muestran la imagen con el anillo debajo del texto
+// alternativo (y ese texto más grande)
+const WITH_MOBILE_IMAGE: string[] = ["analytics", "seo", "ads"];
 
 function ServiceBlock({
   service,
@@ -338,13 +344,29 @@ function ServiceBlock({
   underTitle?: boolean;
 }) {
   const stackBase = underTitle ? STACK_BASE_UNDER_TITLE : STACK_BASE;
+  // Props del prompt del servicio (se usa en escritorio en la columna
+  // izquierda y en mobile debajo de las cards)
+  const promptProps = {
+    headingAs: "h4" as const,
+    transparent: true,
+    questionClassName: "font-bold",
+    // misma referencia en todos los servicios → misma letra en todas las
+    // preguntas, sin importar su largo
+    fitReference: "¿Qué querés medir mejor en tu negocio?",
+    // en mobile, la pregunta más grande: 86% del recuadro. La de SEO es
+    // más larga, así que queda en 74% para que entre en una línea.
+    mobileFitRatio: service.id === "seo" ? 0.74 : 0.86,
+    question: service.prompt.question,
+    placeholder: service.prompt.placeholder,
+    defaultServices: [service.prompt.service],
+  };
   return (
     <div
       id={`servicio-${service.id}`}
       // En escritorio ocupa todo el ancho de la pantalla (rompe el contenedor
       // centrado) y se divide 45vw (servicio) / 55vw (cards), cada columna con
       // su propio padding lateral.
-      className="grid gap-12 py-12 lg:ml-[calc(50%-50vw)] lg:w-screen lg:grid-cols-[45vw_55vw] lg:gap-0"
+      className="grid pt-12 pb-4 lg:ml-[calc(50%-50vw)] lg:py-12 lg:w-screen lg:grid-cols-[45vw_55vw] lg:gap-0"
     >
       {/* Izquierda (fija mientras pasan las cards): arriba la imagen dentro
           del anillo animado, abajo un bloque de prompt como el del hero con
@@ -353,7 +375,10 @@ function ServiceBlock({
       <div
         data-sticky-col
         className={cn(
-          "lg:sticky lg:flex lg:min-h-[36rem] lg:flex-col lg:self-start lg:pl-10 lg:pr-12 xl:pl-20",
+          // mobile/tablet: "contents" → sus hijos pasan a ser items de la
+          // grilla, así el prompt (order-2) puede ir debajo de las cards
+          // (order-1)
+          "max-lg:contents lg:sticky lg:flex lg:min-h-[36rem] lg:flex-col lg:self-start lg:pl-10 lg:pr-12 xl:pl-20",
           underTitle
             ? "lg:top-[calc(var(--site-header-height,77px)+7rem)] lg:h-[calc(100svh-var(--site-header-height,77px)-9.5rem)]"
             : "lg:top-[calc(var(--site-header-height,77px)+2.5rem)] lg:h-[calc(100svh-var(--site-header-height,77px)-5rem)]",
@@ -399,32 +424,104 @@ function ServiceBlock({
             />
           )}
         </div>
-        {/* En celular, solo el nombre del servicio */}
-        <h3 className="font-heading text-4xl font-normal tracking-tight text-[#4a4a4a] lg:sr-only">
-          {service.name}
+        {/* En celular, solo el nombre del servicio, como pill (mismo estilo
+            que la pill de escritorio, en el color del servicio) */}
+        <h3 className="lg:sr-only">
+          <TagPill
+            tone="category"
+            variant="outline"
+            color={service.color}
+            className="px-4 py-1 text-base"
+          >
+            {service.name}
+          </TagPill>
         </h3>
-        <HeroPromptBox
-          // Con imagen cargada (hoy ADS), más aire entre la imagen y el prompt
-          className={cn("relative z-10 mt-6 shrink-0", image?.image_url ? "lg:mt-6" : "lg:mt-4")}
-          headingAs="h4"
-          transparent
-          questionClassName="font-bold"
-          // misma referencia en todos los servicios → misma letra en todas
-          // las preguntas, sin importar su largo
-          fitReference="¿Qué querés medir mejor en tu negocio?"
-          question={service.prompt.question}
-          placeholder={service.prompt.placeholder}
-          defaultServices={[service.prompt.service]}
-        />
+        {/* En celular, debajo de la pill: el texto alternativo de la imagen
+            cargado en /admin/services */}
+        {image?.image_alt && (
+          <p
+            className={cn(
+              "mt-5 font-heading text-[1.75rem] font-normal leading-[1.1] tracking-tight text-[#5e5e5e] lg:hidden",
+              // Analytics, SEO y ADS: texto más grande y aire con la imagen de abajo
+              WITH_MOBILE_IMAGE.includes(service.id) && "pb-6 text-[2rem] leading-[1]",
+            )}
+          >
+            {image.image_alt}
+          </p>
+        )}
+        {/* En celular, en Analytics, SEO y ADS: la imagen con el anillo animado
+            detrás, debajo del texto alternativo (en escritorio esto vive en
+            la columna de arriba). alt vacío: el texto de arriba ya la
+            describe. */}
+        {WITH_MOBILE_IMAGE.includes(service.id) && image?.image_url && (
+          // Alto con margen para que el anillo (y sus ondas) no se corte abajo
+          <div className="relative mt-4 h-[22rem] lg:hidden">
+            <HeroSolaris
+              anchorX={0.5}
+              anchorY={0.5}
+              size={0.37}
+              // SEO (celular): anillo un poco más grande y más arriba. El
+              // lienzo se extiende 40px arriba y 32px abajo del contenedor
+              // para que el anillo (con sus llamaradas) no se corte; el
+              // centro queda a 158px del borde superior del contenedor.
+              className={service.id === "seo" ? "max-md:-top-10 max-md:-bottom-8" : undefined}
+              mobileSize={service.id === "seo" ? 0.42 : undefined}
+              mobileAnchorY={service.id === "seo" ? 0.467 : undefined}
+              color={service.color}
+              background={false}
+              scrollExplode={false}
+              fixedAnchor
+            />
+            <CutoutImage
+              src={image.image_url}
+              alt=""
+              className={cn(
+                "pointer-events-none absolute bottom-[70px] left-1/2 z-[5] h-[82%] w-[110%] -translate-x-1/2 origin-bottom scale-[1.08] select-none object-contain object-bottom drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]",
+                // SEO (celular): la imagen un poco más abajo
+                service.id === "seo" && "max-md:bottom-[50px]",
+              )}
+            />
+          </div>
+        )}
+        {/* Bloque del prompt (escritorio). En mobile se muestra debajo de
+            las cards (ver más abajo). */}
+        <div
+          // Con imagen cargada, más aire entre la imagen y el prompt
+          className={cn(
+            "relative z-10 mt-6 shrink-0 max-lg:hidden",
+            image?.image_url ? "lg:mt-6" : "lg:mt-4",
+          )}
+        >
+          <HeroPromptBox {...promptProps} />
+        </div>
       </div>
 
-      {/* Derecha: problemas del cliente, apilándose al scrollear */}
-      <div className="flex flex-col gap-8 lg:gap-24 lg:pr-10 lg:pl-4 xl:pr-20">
+      {/* Derecha: problemas del cliente, apilándose al scrollear (también en
+          mobile). En mobile, detrás de las cards y del prompt va el fondo
+          difuminado del hero, a todo el ancho y desvanecido arriba y abajo
+          (mask) para que no se note el corte del bloque. */}
+      <div className="relative max-lg:mt-0 max-lg:pt-4 max-lg:pb-10 lg:pr-10 lg:pl-4 xl:pr-20">
+        <HeroAurora className="absolute inset-y-0 -inset-x-6 md:-inset-x-10 lg:hidden [mask-image:linear-gradient(to_bottom,transparent,black_15%,black_85%,transparent)]" />
+        {/* Las cards se apilan solo dentro de este contenedor: al terminar,
+            se sueltan y no tapan el prompt de abajo */}
+        <div className="flex flex-col gap-8 lg:gap-24">
+        <StackShade />
         {service.issues.map((issue, i) => (
           <article
             key={issue.title}
-            className="relative rounded-[28px] border border-neutral-200 bg-white p-8 shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.12)] md:p-10 lg:sticky lg:min-h-[30rem]"
-            style={{ top: `calc(${stackBase} + ${i * STACK_STEP_REM}rem)` }}
+            data-stack-card
+            // sombra hacia arriba más marcada: la card que entra proyecta
+            // sombra sobre la de atrás
+            className="rounded-[28px] border border-neutral-200 bg-white p-5 shadow-[0_-16px_40px_-12px_rgba(0,0,0,0.28)] md:p-10 sticky top-[var(--stack-top-sm)] lg:top-[var(--stack-top-lg)] lg:min-h-[30rem]"
+            style={
+              {
+                // escritorio: debajo del header (y del título fijo)
+                "--stack-top-lg": `calc(${stackBase} + ${i * STACK_STEP_REM}rem)`,
+                // mobile: el header no queda fijo, así que se apilan desde
+                // arriba de la pantalla, cada una un poco más abajo
+                "--stack-top-sm": `calc(1rem + ${i * 0.75}rem)`,
+              } as React.CSSProperties
+            }
           >
             {/* Fila de arriba: "Problema NN" a la izquierda y la comilla
                 decorativa a la derecha (en el color del servicio, muy
@@ -439,10 +536,10 @@ function ServiceBlock({
               </span>
               <QuoteMark
                 color={service.color}
-                className="pointer-events-none -mr-2 w-14 shrink-0 md:-mr-4 md:w-[4.5rem]"
+                className="pointer-events-none -mr-2 w-12 shrink-0 md:-mr-4 md:w-[4.5rem]"
               />
             </div>
-            <h4 className="mt-3 font-heading text-[1.75rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2rem]">
+            <h4 className="mt-3 font-heading text-[1.625rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2rem]">
               {issue.title}
             </h4>
             <p className="mt-2 font-heading text-lg font-extralight leading-snug text-[#4a4a4a] md:text-xl">
@@ -456,12 +553,12 @@ function ServiceBlock({
                 {issue.help.map((item) => (
                   <li
                     key={item}
-                    className="flex items-start gap-2.5 text-sm text-[#4a4a4a]"
+                    className="flex items-start gap-2.5 text-[15px] text-[#4a4a4a] md:text-base"
                   >
                     {/* tilde dentro de un círculo en el color del servicio */}
                     <span
                       aria-hidden
-                      className="mt-px flex size-[18px] shrink-0 items-center justify-center rounded-full"
+                      className="mt-[3px] flex size-[18px] shrink-0 items-center justify-center rounded-full"
                       style={{ backgroundColor: service.color }}
                     >
                       <Check className="size-3 text-white" strokeWidth={3} />
@@ -471,11 +568,30 @@ function ServiceBlock({
                 ))}
               </ul>
             </div>
+            {/* Sombreado de la card de atrás: se oscurece desde abajo a
+                medida que la siguiente se le apila encima (--cover, ver
+                StackShade) */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-[inherit] bg-gradient-to-t from-black/45 via-black/15 to-transparent"
+              style={{ opacity: "var(--cover, 0)" }}
+            />
           </article>
         ))}
         {/* Espacio extra al final: con la última card ya apilada, el mazo
             se queda quieto un momento antes de soltarse */}
         <div aria-hidden className="hidden h-[20svh] lg:block" />
+        </div>
+        {/* Mobile: el prompt va debajo de las cards, sobre el fondo
+            difuminado (no es una card) y con el recuadro de texto en blanco */}
+        <div className="relative mt-12 lg:hidden">
+          <HeroPromptBox
+            {...promptProps}
+            transparent={false}
+            // recuadro del prompt un poco más alto (solo mobile)
+            minInputHeight={80}
+          />
+        </div>
       </div>
     </div>
   );

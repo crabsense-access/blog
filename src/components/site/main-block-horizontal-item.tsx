@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { PostImage } from "@/components/site/post-image";
-import { TagPill } from "@/components/site/tag-pill";
+import { ITEM_PILL_DESKTOP, TagPill } from "@/components/site/tag-pill";
 import { orderSubcategoriesForDisplay } from "@/lib/subcategory-order";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
@@ -72,7 +72,16 @@ export function MainBlockHorizontalItem({
           contenido (ej. un solo item ocupando todo el bloque de 100vh), el
           sobrante queda en blanco debajo en vez de estirar la imagen más
           allá de su alto de contenido. */}
-      <div className="grid grid-cols-[12rem_1fr] gap-x-6 gap-y-4">
+      {/* Con flexShare (Bloque Principal de la home del blog) el grid sí
+          ocupa todo el alto del item: la imagen se estira hasta abajo y la
+          fecha queda al pie, así los 2 items horizontales llenan el mismo
+          alto que el destacado de la izquierda. */}
+      <div
+        className={cn(
+          "grid grid-cols-[12rem_1fr] gap-x-6 gap-y-4",
+          flexShare && "min-h-0 flex-1 grid-rows-[minmax(0,1fr)]"
+        )}
+      >
         <Link
           href={`/blog/${post.slug}`}
           // La imagen también lleva al post. Sale del orden de tabulación y de los
@@ -91,7 +100,7 @@ export function MainBlockHorizontalItem({
         <div className="row-start-1 flex min-w-0 flex-col justify-start gap-4">
           {showPills && category && (
             <div className="mt-2 flex min-h-7 flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className="mr-[2%] px-4 py-1 text-base">
+              <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className={cn("mr-[2%] px-4 py-1 text-base", ITEM_PILL_DESKTOP)}>
                 {category.name}
               </TagPill>
               {orderedSubcategories.map(({ subcategory: sub, active }) => (
@@ -100,8 +109,9 @@ export function MainBlockHorizontalItem({
                   tone="subcategory"
                   href={`/blog/categoria/${category.slug}/${sub.slug}`}
                   className={cn(
-                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
-                    active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
+                    "border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
+                    ITEM_PILL_DESKTOP,
+                    active && "border-gray-800 bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                   )}
                 >
                   {sub.name}
@@ -133,7 +143,7 @@ export function MainBlockHorizontalItem({
           )}
 
           {showAuthorMeta && post.published_at && (
-            <div className="flex items-end justify-end gap-2 pt-4">
+            <div className={cn("flex items-end justify-end gap-2 pt-4", flexShare && "mt-auto")}>
               <span className={cn("text-sm uppercase text-muted-foreground", metaClassName)}>
                 {new Date(post.published_at).toLocaleDateString("es-AR", {
                   year: "numeric",

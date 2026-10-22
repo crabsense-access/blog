@@ -3,7 +3,7 @@ import type { Ref } from "react";
 
 import { PostImage } from "@/components/site/post-image";
 import { AuthorAvatar } from "@/components/site/author-avatar";
-import { TagPill } from "@/components/site/tag-pill";
+import { ITEM_PILL_DESKTOP, TagPill } from "@/components/site/tag-pill";
 import { orderSubcategoriesForDisplay } from "@/lib/subcategory-order";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
@@ -60,7 +60,7 @@ export function FeaturedPostContent({
       <div className="flex flex-col gap-3">
         {category && (
           <div className="mb-2 flex min-h-7 flex-wrap items-center gap-2">
-            <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className="mr-[2%] px-4 py-1 text-base">
+            <TagPill tone="category" variant="outline" color={category.pill_color} href={`/blog/categoria/${category.slug}`} className={cn("mr-[2%] px-4 py-1 text-base", ITEM_PILL_DESKTOP)}>
               {category.name}
             </TagPill>
             {orderedSubcategories.map(({ subcategory: sub, active }) => (
@@ -69,8 +69,9 @@ export function FeaturedPostContent({
                 tone="subcategory"
                 href={`/blog/categoria/${category.slug}/${sub.slug}`}
                 className={cn(
-                  "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
-                  active && "bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
+                  "border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
+                  ITEM_PILL_DESKTOP,
+                  active && "border-gray-800 bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                 )}
               >
                 {sub.name}

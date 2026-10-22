@@ -17,6 +17,10 @@ export interface LeadNotification {
   contactType: "email" | "phone";
   websiteUrl?: string | null;
   pagePath?: string | null;
+  /** solo formulario de contacto */
+  name?: string | null;
+  phone?: string | null;
+  source?: "prompt" | "form";
 }
 
 const escapeHtml = (s: string) =>
@@ -65,12 +69,18 @@ async function sendEmail(lead: LeadNotification) {
     from: LEAD_EMAIL_FROM || `Crabsense Web <${SMTP_USER}>`,
     to: LEAD_EMAIL_TO.split(",").map((s) => s.trim()).filter(Boolean),
     replyTo: lead.contactType === "email" ? lead.contact : undefined,
-    subject: `Nuevo lead (${services}) · ${lead.contact}`,
+    subject:
+      lead.source === "form"
+        ? `Nuevo contacto (formulario) · ${lead.name ?? lead.contact}`
+        : `Nuevo lead (${services}) · ${lead.contact}`,
     text: [
       "Nuevo lead desde el sitio — contactar en menos de 10 minutos.",
       "",
+      `Origen: ${lead.source === "form" ? "Formulario de contacto" : "Prompt"}`,
+      ...(lead.name ? [`Nombre: ${lead.name}`] : []),
       `Servicios: ${services}`,
       `Contacto: ${lead.contact} (${lead.contactType === "email" ? "email" : "celular"})`,
+      ...(lead.phone ? [`Teléfono: ${lead.phone}`] : []),
       `Sitio web: ${lead.websiteUrl ?? "-"}`,
       `Responder: ${link}`,
       "",
@@ -84,8 +94,10 @@ async function sendEmail(lead: LeadNotification) {
         <p style="margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#3d3c89">Nuevo lead · ${escapeHtml(nowAR())}</p>
         <h2 style="margin:0 0 16px;font-size:20px">Contactar en menos de 10 minutos</h2>
         <table style="border-collapse:collapse;font-size:14px;width:100%">
+          ${lead.name ? `<tr><td style="padding:6px 12px 6px 0;color:#666;width:110px">Nombre</td><td style="padding:6px 0"><strong>${escapeHtml(lead.name)}</strong></td></tr>` : ""}
           <tr><td style="padding:6px 12px 6px 0;color:#666;width:110px">Servicios</td><td style="padding:6px 0"><strong>${escapeHtml(services)}</strong></td></tr>
           <tr><td style="padding:6px 12px 6px 0;color:#666">Contacto</td><td style="padding:6px 0"><strong>${escapeHtml(lead.contact)}</strong></td></tr>
+          ${lead.phone ? `<tr><td style="padding:6px 12px 6px 0;color:#666">Teléfono</td><td style="padding:6px 0"><a href="https://wa.me/${lead.phone.replace(/[^\d]/g, "")}" style="color:#3d3c89">${escapeHtml(lead.phone)}</a></td></tr>` : ""}
           <tr><td style="padding:6px 12px 6px 0;color:#666">Sitio web</td><td style="padding:6px 0">${lead.websiteUrl ? `<a href="${escapeHtml(lead.websiteUrl)}" style="color:#3d3c89">${escapeHtml(lead.websiteUrl)}</a>` : "-"}</td></tr>
           <tr><td style="padding:6px 12px 6px 0;color:#666;vertical-align:top">Mensaje</td><td style="padding:6px 0;white-space:pre-wrap">${escapeHtml(msg)}</td></tr>
           <tr><td style="padding:6px 12px 6px 0;color:#666">Página</td><td style="padding:6px 0">${escapeHtml(lead.pagePath ?? "-")}</td></tr>
@@ -112,9 +124,13 @@ async function sendWhatsApp(lead: LeadNotification) {
 
   const msg = lead.message ? lead.message.slice(0, 500) : "(sin mensaje)";
   const text = [
-    "*Nuevo lead Crabsense* — contactar en < 10 min",
+    lead.source === "form"
+      ? "*Nuevo contacto Crabsense (formulario)*"
+      : "*Nuevo lead Crabsense* — contactar en < 10 min",
+    ...(lead.name ? [`Nombre: ${lead.name}`] : []),
     `Servicios: ${serviceLabels(lead.services)}`,
     `Contacto: ${lead.contact}`,
+    ...(lead.phone ? [`Teléfono: ${lead.phone}`] : []),
     `Sitio web: ${lead.websiteUrl ?? "-"}`,
     `Responder: ${replyLink(lead)}`,
     `Mensaje: ${msg}`,

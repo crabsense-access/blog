@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { PostImage } from "@/components/site/post-image";
 import { AuthorAvatar } from "@/components/site/author-avatar";
-import { TagPill } from "@/components/site/tag-pill";
+import { ITEM_PILL_DESKTOP, TagPill } from "@/components/site/tag-pill";
 import { CategoryPillCircleFill } from "@/components/site/category-pill-circle-fill";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
@@ -221,13 +221,14 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
   const progressPercent = maxProgress > 0 ? (progress / maxProgress) * 100 : 100;
 
   return (
-    <div
-      className="relative z-0 mb-10"
-      style={{ marginTop: "calc(-1 * var(--site-header-height, 4.5rem))" }}
-    >
+    // Arranca debajo del header (no se mete por detrás).
+    <div className="relative z-0 mb-4 mt-3">
       <div
         ref={stageRef}
-        className="relative h-[70vh] w-full touch-pan-y select-none overflow-hidden rounded-2xl"
+        // alto: lo que queda del viewport para que header + slider + controles +
+        // menú sticky de categorías (≈161px entre márgenes, controles y menú)
+        // ocupen justo el 100% de la pantalla
+        className="relative h-[max(420px,calc(100svh-var(--site-header-height,80px)-161px))] w-full touch-pan-y select-none overflow-hidden rounded-2xl"
       >
         {posts.map((post, i) => {
           const distance = Math.abs(progress - i);
@@ -284,7 +285,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
               aria-hidden={!active}
               tabIndex={active ? 0 : -1}
               className={cn(
-                "absolute bottom-0 left-1/2 flex h-[54vh] w-[80%] flex-col justify-center gap-2 rounded-md border border-gray-200 bg-white px-6 py-4 sm:px-9 sm:py-5",
+                "absolute bottom-0 left-1/2 flex h-[74%] w-[80%] flex-col justify-center gap-2 rounded-md border border-gray-200 bg-white px-6 py-4 sm:px-9 sm:py-5",
                 active ? "pointer-events-auto" : "pointer-events-none"
               )}
               style={{
@@ -302,7 +303,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
                   {post.category && (
                     <CategoryPillCircleFill
                       color={post.category.pill_color}
-                      className="px-4 py-1 text-base"
+                      className={cn("px-4 py-1 text-base", ITEM_PILL_DESKTOP)}
                     >
                       {post.category.name}
                     </CategoryPillCircleFill>
@@ -311,7 +312,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
                     <TagPill
                       key={sub.id}
                       tone="subcategory"
-                      className="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+                      className={cn("border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700", ITEM_PILL_DESKTOP)}
                     >
                       {sub.name}
                     </TagPill>
@@ -326,7 +327,7 @@ export function HomeHeroSlider({ posts }: HomeHeroSliderProps) {
                   {post.excerpt}
                 </p>
               )}
-              <div className="mt-12 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-8 flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <span
                   className="font-heading inline-flex w-fit items-center gap-1.5 rounded-full px-7 py-3.5 text-sm font-medium uppercase text-white transition-opacity hover:opacity-90"
                   style={{ backgroundColor: post.category?.pill_color || "#111827" }}

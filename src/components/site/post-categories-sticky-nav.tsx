@@ -469,7 +469,7 @@ function CategoryAccordionItem({
                 key={sub.id}
                 tone="subcategory"
                 href={`/blog/categoria/${category.slug}/${sub.slug}`}
-                className="shrink-0 border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+                className="shrink-0 border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
               >
                 {sub.name}
               </TagPill>

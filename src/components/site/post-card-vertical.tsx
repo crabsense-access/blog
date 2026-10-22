@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { PostImage } from "@/components/site/post-image";
 import { AuthorAvatar } from "@/components/site/author-avatar";
-import { TagPill } from "@/components/site/tag-pill";
+import { ITEM_PILL_DESKTOP, TagPill } from "@/components/site/tag-pill";
 import { orderSubcategoriesForDisplay } from "@/lib/subcategory-order";
 import { cn } from "@/lib/utils";
 import type { PostWithRelations } from "@/lib/types";
@@ -21,6 +21,13 @@ interface PostCardVerticalContentProps {
   subcategoryPillClassName?: string;
   titleClassName?: string;
   excerptClassName?: string;
+  /** clases extra para el nombre y el cargo del autor */
+  authorNameClassName?: string;
+  authorTitleClassName?: string;
+  /** clases extra para la fila de abajo (autor + fecha) */
+  footerClassName?: string;
+  /** clases extra para la fecha */
+  dateClassName?: string;
 }
 
 export function PostCardVerticalContent({
@@ -34,6 +41,10 @@ export function PostCardVerticalContent({
   subcategoryPillClassName,
   titleClassName,
   excerptClassName,
+  authorNameClassName,
+  authorTitleClassName,
+  footerClassName,
+  dateClassName,
 }: PostCardVerticalContentProps) {
   const authorLabel = post.author?.full_name || post.author?.email;
   const category = post.category;
@@ -62,7 +73,7 @@ export function PostCardVerticalContent({
       {category && (showCategory || (showSubcategories && post.subcategories.length > 0)) && (
         <div className="mt-2 mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
           {showCategory && categoryTone === "subcategory" && (
-            <TagPill tone="subcategory" href={`/blog/categoria/${category.slug}`} className="text-sm">
+            <TagPill tone="subcategory" href={`/blog/categoria/${category.slug}`} className={cn("text-sm", ITEM_PILL_DESKTOP)}>
               {category.name}
             </TagPill>
           )}
@@ -72,7 +83,7 @@ export function PostCardVerticalContent({
               variant={categoryPillVariant}
               color={category.pill_color}
               href={`/blog/categoria/${category.slug}`}
-              className={cn("text-sm", categoryPillClassName)}
+              className={cn("text-sm", categoryPillClassName, ITEM_PILL_DESKTOP)}
             >
               {category.name}
             </TagPill>
@@ -85,9 +96,10 @@ export function PostCardVerticalContent({
                   tone="subcategory"
                   href={`/blog/categoria/${category.slug}/${sub.slug}`}
                   className={cn(
-                    "border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
+                    "border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700",
                     subcategoryPillClassName,
-                    active && "bg-gray-800 text-white hover:bg-gray-700"
+                    ITEM_PILL_DESKTOP,
+                    active && "border-gray-800 bg-gray-800 text-white hover:border-gray-700 hover:bg-gray-700"
                   )}
                 >
                   {sub.name}
@@ -110,19 +122,19 @@ export function PostCardVerticalContent({
         </p>
       )}
 
-      <div className="mt-auto flex items-end justify-between gap-2 pt-6">
+      <div className={cn("mt-auto flex items-end justify-between gap-2 pt-6", footerClassName)}>
         {authorLabel ? (
           <div className="flex items-center gap-2">
             <AuthorAvatar author={post.author ?? {}} />
             <div className="flex flex-col leading-tight">
               <Link
                 href={`/blog/autor/${post.author?.id}`}
-                className="text-base font-medium text-foreground hover:underline"
+                className={cn("text-base font-medium text-foreground hover:underline", authorNameClassName)}
               >
                 {authorLabel}
               </Link>
               {post.author?.public_title && (
-                <span className="text-sm uppercase text-muted-foreground">
+                <span className={cn("text-sm uppercase text-muted-foreground", authorTitleClassName)}>
                   {post.author.public_title}
                 </span>
               )}
@@ -132,7 +144,7 @@ export function PostCardVerticalContent({
           <div />
         )}
         {post.published_at && (
-          <span className="text-sm uppercase text-muted-foreground">
+          <span className={cn("text-sm uppercase text-muted-foreground", dateClassName)}>
             {new Date(post.published_at).toLocaleDateString("es-AR", {
               year: "numeric",
               month: "short",
@@ -155,6 +167,15 @@ interface PostCardVerticalProps {
   subcategoryPillClassName?: string;
   titleClassName?: string;
   excerptClassName?: string;
+  /** clases extra para el nombre y el cargo del autor */
+  authorNameClassName?: string;
+  authorTitleClassName?: string;
+  /** clases extra para la fila de abajo (autor + fecha) */
+  footerClassName?: string;
+  /** clases extra para la fecha */
+  dateClassName?: string;
+  /** clases extra para el contenedor de la card (ej. ancho/estilo en mobile) */
+  className?: string;
 }
 
 export function PostCardVertical({
@@ -167,9 +188,14 @@ export function PostCardVertical({
   subcategoryPillClassName,
   titleClassName,
   excerptClassName,
+  authorNameClassName,
+  authorTitleClassName,
+  footerClassName,
+  dateClassName,
+  className,
 }: PostCardVerticalProps) {
   return (
-    <div className="w-[calc((100%-3rem)/3.12)] shrink-0 snap-start">
+    <div className={cn("w-[calc((100%-3rem)/3.12)] shrink-0 snap-start", className)}>
       <PostCardVerticalContent
         post={post}
         showCategory={showCategory}
@@ -179,6 +205,10 @@ export function PostCardVertical({
         subcategoryPillClassName={subcategoryPillClassName}
         titleClassName={titleClassName}
         excerptClassName={excerptClassName}
+        authorNameClassName={authorNameClassName}
+        authorTitleClassName={authorTitleClassName}
+        footerClassName={footerClassName}
+        dateClassName={dateClassName}
         activeSubcategorySlug={activeSubcategorySlug}
       />
     </div>

@@ -6,7 +6,7 @@ import { ArrowRightIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { PostCardVertical } from "@/components/site/post-card-vertical";
 import { CategoryPillCircleFill } from "@/components/site/category-pill-circle-fill";
-import { TagPill } from "@/components/site/tag-pill";
+import { ITEM_PILL_DESKTOP, TagPill } from "@/components/site/tag-pill";
 import {
   CAROUSEL_DIVIDER_CLASS,
   CAROUSEL_HEADER_WRAPPER_CLASS,
@@ -115,7 +115,7 @@ export function CategoryCarouselRow({
             <CategoryPillCircleFill
               color={categoryColor}
               href={`/blog/categoria/${categorySlug}`}
-              className="px-4 py-1 text-base font-bold"
+              className={cn("px-4 py-1 text-base font-bold", ITEM_PILL_DESKTOP)}
             >
               {categoryName}
             </CategoryPillCircleFill>
@@ -133,7 +133,7 @@ export function CategoryCarouselRow({
                       key={sub.id}
                       tone="subcategory"
                       href={`/blog/categoria/${categorySlug}/${sub.slug}`}
-                      className="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+                      className={cn("border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700", ITEM_PILL_DESKTOP)}
                     >
                       {sub.name}
                     </TagPill>
@@ -172,7 +172,7 @@ export function CategoryCarouselRow({
             <CategoryPillCircleFill
               color={categoryColor}
               href={`/blog/categoria/${categorySlug}`}
-              className="px-4 py-1 text-base"
+              className={cn("px-4 py-1 text-base", ITEM_PILL_DESKTOP)}
             >
               Ver todo
               <ArrowRightIcon className="size-3.5" />
@@ -215,7 +215,7 @@ export function CategoryCarouselRow({
               post={post}
               categoryPillVariant="outline"
               categoryPillClassName="px-4 py-1 text-base"
-              subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+              subcategoryPillClassName="border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
               titleClassName="font-heading font-normal text-2xl lg:text-3xl"
               excerptClassName="text-lg"
             />

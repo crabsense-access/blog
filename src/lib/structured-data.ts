@@ -2,7 +2,7 @@ import type { PostFaq, PostWithRelations, GlossaryTermWithRelations } from "@/li
 import { GLOSSARY_CATEGORY_LABELS } from "@/lib/validations/glossary";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002";
-const SITE_LOGO = "https://crabsense.com/wp-content/uploads/2022/07/crabsense-logo.svg";
+const SITE_LOGO = `${SITE_URL}/crabsense-logo.svg`;
 const ORG_NAME = "Crabsense";
 
 function publisherSchema() {

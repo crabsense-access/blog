@@ -41,6 +41,8 @@ export function HeroPromptBox({
   questionClassName,
   showQuestion = true,
   minInputHeight = 48,
+  mobileHero = false,
+  mobileFitRatio,
 }: {
   className?: string;
   // Si la home ya tiene un titular (h1) configurado desde el admin, esta
@@ -65,7 +67,25 @@ export function HeroPromptBox({
   showQuestion?: boolean;
   /** alto mínimo (px) del área donde se escribe el prompt */
   minInputHeight?: number;
+  /** true (hero de la home) = en mobile la pregunta ocupa todo el ancho y
+   *  el recuadro del prompt es un poco más alto */
+  mobileHero?: boolean;
+  /** en mobile (< 768px), fracción del ancho del recuadro que ocupa la
+   *  pregunta (por defecto 0.64, igual que en escritorio) */
+  mobileFitRatio?: number;
 }) {
+  // mobile = < 768px (breakpoint md de Tailwind)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (!mobileHero) return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, [mobileHero]);
+  const mobileFull = mobileHero && isMobile;
+  const inputMinHeight = mobileFull ? Math.max(minInputHeight + 24, 96) : minInputHeight;
   const [step, setStep] = useState<Step>("prompt");
   const [message, setMessage] = useState("");
   const [services, setServices] = useState<LeadService[]>(defaultServices);
@@ -92,14 +112,22 @@ export function HeroPromptBox({
   const titleTextRef = useRef<HTMLSpanElement>(null);
   const refTextRef = useRef<HTMLSpanElement>(null);
 
-  // el título ocupa el 64% del ancho del recuadro del prompt
+  // el título ocupa el 64% del ancho del recuadro del prompt (en el hero
+  // mobile, letra fija de 20px en dos líneas)
   useEffect(() => {
     const h1 = titleRef.current;
     // se mide el texto de referencia (si hay) en vez de la pregunta
     const text = refTextRef.current ?? titleTextRef.current;
     if (!h1 || !text) return;
     const fit = () => {
-      const target = h1.clientWidth * 0.64; // 64% del ancho del recuadro
+      // hero mobile: tamaño fijo (por CSS) en dos líneas, sin ajuste por ancho
+      if (mobileFull) {
+        h1.style.fontSize = "";
+        return;
+      }
+      const ratio =
+        mobileFitRatio && window.innerWidth < 768 ? mobileFitRatio : 0.64;
+      const target = h1.clientWidth * ratio;
       if (!target) return;
       const base = 100;
       h1.style.fontSize = `${base}px`;
@@ -111,7 +139,7 @@ export function HeroPromptBox({
     ro.observe(h1);
     document.fonts?.ready.then(fit);
     return () => ro.disconnect();
-  }, []);
+  }, [mobileFull, mobileFitRatio]);
 
   const canSend = message.trim().length > 0 || services.length > 0;
 
@@ -120,8 +148,8 @@ export function HeroPromptBox({
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, Math.max(168, minInputHeight))}px`;
-  }, [message, minInputHeight]);
+    el.style.height = `${Math.min(el.scrollHeight, Math.max(168, inputMinHeight))}px`;
+  }, [message, inputMinHeight]);
 
   // cerrar el menú al hacer click afuera o con Esc
   useEffect(() => {
@@ -235,7 +263,10 @@ export function HeroPromptBox({
         <Heading
           ref={titleRef}
           className={cn(
-            "relative mb-3 whitespace-nowrap pl-[2%] text-[3.9cqi] font-light leading-tight tracking-tight text-[#4a4a4a]",
+            "relative mb-3 whitespace-nowrap pl-[2%] text-[3.9cqi]",
+            "font-light leading-tight tracking-tight text-[#4a4a4a]",
+            // hero mobile: sin sangría y en negrita
+            mobileFull && "whitespace-normal text-balance pl-0 text-center text-[1.25rem]! font-bold leading-[1.1]",
             questionClassName
           )}
         >
@@ -257,6 +288,8 @@ export function HeroPromptBox({
       <div
         className={cn(
           "relative rounded-[28px] border p-3",
+          // hero mobile: el recuadro queda por encima del anillo animado
+          mobileFull && "z-[7]",
           transparent
             ? "border-neutral-200/70 bg-white/30 backdrop-blur-sm"
             : "border-neutral-200 bg-white/90 shadow-[0_10px_40px_-12px_rgba(61,60,137,0.25)] backdrop-blur"
@@ -286,7 +319,7 @@ export function HeroPromptBox({
                 }
               }}
               placeholder={placeholder}
-              style={{ minHeight: minInputHeight }}
+              style={{ minHeight: inputMinHeight }}
               className="block min-h-[48px] w-full resize-none bg-transparent px-2 py-2 text-base text-neutral-950 placeholder:text-neutral-400 focus:outline-none"
             />
             <div className="mt-1 flex items-center justify-between">

@@ -65,6 +65,40 @@ export async function generatePostContent(
   const { topic, category_id, subcategory_ids } = parsed.data;
   const supabase = await createClient();
 
+  // Novedad del radar elegida como punto de partida (opcional): se pasa a la
+  // IA con su fuente principal y los referentes sumados.
+  const newsItemId = String(formData.get("news_item_id") ?? "");
+  let newsContext = "";
+  if (newsItemId) {
+    const { data: item } = await supabase
+      .from("news_items")
+      .select("platform, title, summary, why_it_matters, ai_angle, source_url, source_name, source_type, published_date, related_links")
+      .eq("id", newsItemId)
+      .maybeSingle();
+    if (item) {
+      const related = (Array.isArray(item.related_links) ? item.related_links : []) as {
+        title: string;
+        url: string;
+        source: string;
+        type: string;
+        summary: string;
+      }[];
+      newsContext = `
+
+La nota parte de esta NOVEDAD del radar de Crabsense (es la base: explicala bien, con contexto, impacto y qué hacer):
+- Plataforma: ${item.platform}
+- Novedad: ${item.title}${item.published_date ? ` (publicada el ${item.published_date})` : ""}
+- Resumen: ${item.summary}
+- Por qué importa: ${item.why_it_matters}${item.ai_angle ? `\n- Ángulo IA: ${item.ai_angle}` : ""}
+- Fuente principal (${item.source_type === "official" ? "oficial" : "referente"}): ${item.source_name ?? ""} ${item.source_url}
+
+Referentes sobre el mismo tema (usalos para dar contexto, datos y opiniones; citá los que uses en "## Fuentes" con su URL exacta, empezando por la fuente principal):
+${related.length ? related.map((l) => `- ${l.title} (${l.source}, ${l.type === "official" ? "oficial" : "referente"}): ${l.url}\n  ${l.summary}`).join("\n") : "(sin referentes adicionales)"}
+
+Podés usar la búsqueda web para verificar fechas y completar datos, pero no contradigas la fuente oficial.`;
+    }
+  }
+
   const [{ data: category }, { data: subcategories }, { data: existingPosts }] = await Promise.all([
     supabase.from("categories").select("name").eq("id", category_id).maybeSingle(),
     supabase.from("subcategories").select("name").in("id", subcategory_ids),
@@ -102,7 +136,7 @@ export async function generatePostContent(
       messages: [
         {
           role: "user",
-          content: `Generá una nota de blog sobre "${topic}" para la categoría ${category.name} (subcategorías: ${subcategoryNames}).\n\nNotas ya publicadas en esta categoría (no repitas el mismo ángulo):\n${existingTitlesList}`,
+          content: `Generá una nota de blog sobre "${topic}" para la categoría ${category.name} (subcategorías: ${subcategoryNames}).${newsContext}\n\nNotas ya publicadas en esta categoría (no repitas el mismo ángulo):\n${existingTitlesList}`,
         },
       ],
       output_config: {

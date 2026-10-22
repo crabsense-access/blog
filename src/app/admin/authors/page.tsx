@@ -8,12 +8,27 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getAllProfilesForAdmin } from "@/lib/queries/authors";
+import { createClient } from "@/lib/supabase/server";
 import { AuthorDialog } from "./author-dialog";
+import { DeleteAuthorButton } from "./delete-author-button";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminAuthorsPage() {
-  const profiles = await getAllProfilesForAdmin();
+  const supabase = await createClient();
+  const [profiles, { data: postAuthors }, { data: { user } }] = await Promise.all([
+    getAllProfilesForAdmin(),
+    supabase.from("posts").select("author_id"),
+    supabase.auth.getUser(),
+  ]);
+  const adminCount = profiles.filter((p) => p.role === "admin").length;
+  const labelOf = (p: (typeof profiles)[number]) =>
+    `${p.full_name ?? p.email ?? "Sin nombre"}${p.full_name && p.email ? ` (${p.email})` : ""}`;
+  // cantidad de notas por autor (para distinguir perfiles con el mismo nombre)
+  const postCount = new Map<string, number>();
+  for (const p of postAuthors ?? []) {
+    if (p.author_id) postCount.set(p.author_id, (postCount.get(p.author_id) ?? 0) + 1);
+  }
 
   return (
     <div className="grid gap-6">
@@ -28,6 +43,8 @@ export default async function AdminAuthorsPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Nombre</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Notas</TableHead>
             <TableHead>Cargo público</TableHead>
             <TableHead>Rol</TableHead>
             <TableHead>Experto destacado</TableHead>
@@ -40,6 +57,8 @@ export default async function AdminAuthorsPage() {
               <TableCell className="font-medium">
                 {profile.full_name ?? profile.email ?? "—"}
               </TableCell>
+              <TableCell className="text-muted-foreground">{profile.email ?? "—"}</TableCell>
+              <TableCell className="tabular-nums text-muted-foreground">{postCount.get(profile.id) ?? 0}</TableCell>
               <TableCell className="text-muted-foreground">
                 {profile.public_title ?? "—"}
               </TableCell>
@@ -53,12 +72,25 @@ export default async function AdminAuthorsPage() {
               </TableCell>
               <TableCell className="flex justify-end gap-1">
                 <AuthorDialog profile={profile} />
+                <DeleteAuthorButton
+                  id={profile.id}
+                  name={profile.full_name ?? profile.email ?? "este autor"}
+                  postCount={postCount.get(profile.id) ?? 0}
+                  others={profiles.filter((p) => p.id !== profile.id).map((p) => ({ id: p.id, label: labelOf(p) }))}
+                  disabledReason={
+                    profile.id === user?.id
+                      ? "No podés eliminar tu propio perfil"
+                      : profile.role === "admin" && adminCount <= 1
+                        ? "Es el único admin"
+                        : undefined
+                  }
+                />
               </TableCell>
             </TableRow>
           ))}
           {profiles.length === 0 && (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground">
+              <TableCell colSpan={7} className="text-center text-muted-foreground">
                 Todavía no hay perfiles.
               </TableCell>
             </TableRow>

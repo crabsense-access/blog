@@ -1,6 +1,8 @@
 import { getServiceImages } from "@/lib/queries/service-images";
+import { getServiceIssues } from "@/lib/queries/service-issues";
 import { SERVICE_LIST } from "@/lib/services";
 import { ServiceImageForm } from "./service-image-form";
+import { ServiceIssuesEditor } from "./service-issues-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,13 @@ export default async function AdminServicesPage() {
     images = await getServiceImages();
   } catch (e) {
     loadError = (e as { message?: string }).message ?? "Error desconocido.";
+  }
+  let issues: Awaited<ReturnType<typeof getServiceIssues>> = [];
+  let issuesError: string | null = null;
+  try {
+    issues = await getServiceIssues();
+  } catch (e) {
+    issuesError = (e as { message?: string }).message ?? "Error desconocido.";
   }
 
   return (
@@ -38,6 +47,31 @@ export default async function AdminServicesPage() {
           />
         ))}
       </div>
+
+      <div>
+        <h2 className="text-xl font-semibold">Problemas de cada servicio</h2>
+        <p className="text-sm text-muted-foreground">
+          Las cards &quot;Problema 01, 02…&quot; con su título, descripción y los bullets de
+          &quot;Cómo te ayudamos&quot;.
+        </p>
+      </div>
+      {issuesError ? (
+        <p className="text-sm text-destructive">
+          No se pudieron cargar los problemas ({issuesError}). ¿Corriste la migración
+          20261003000000_service_issues.sql?
+        </p>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-2">
+          {SERVICE_LIST.map((s) => (
+            <ServiceIssuesEditor
+              key={s.slug}
+              slug={s.slug}
+              name={s.name}
+              issues={issues.filter((i) => i.service_slug === s.slug)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,11 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+// En escritorio (md+), las pills de los items del blog (cards de notas y nota
+// destacada) van apenas más chicas que en mobile. Se agrega al final del
+// className para que pise los tamaños que pasa cada listado.
+export const ITEM_PILL_DESKTOP = "md:px-3.5 md:text-[0.9rem] md:leading-normal";
+
 interface TagPillProps {
   children: ReactNode;
   href?: string;

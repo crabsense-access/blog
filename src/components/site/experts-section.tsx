@@ -9,7 +9,7 @@ export function ExpertsSection({ experts }: { experts: Profile[] }) {
 
   return (
     <section className="w-full bg-[#1a1a1a] py-16 md:py-24">
-      <div className="mx-auto max-w-[108rem] px-10 text-center">
+      <div className="mx-auto max-w-[108rem] px-6 text-center md:px-10">
         <h2 className="text-3xl font-bold text-white md:text-4xl">
           Nuestros expertos en el blog
         </h2>

@@ -159,3 +159,22 @@ export interface GlossaryTerm {
 export interface GlossaryTermWithRelations extends GlossaryTerm {
   author: Pick<Profile, "id" | "full_name" | "email" | "public_title" | "avatar_url"> | null;
 }
+
+export type LeadStatus = "nuevo" | "contactado" | "descartado";
+export type LeadSource = "prompt" | "form";
+
+export interface Lead {
+  id: string;
+  created_at: string;
+  source: LeadSource;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  services: string[];
+  message: string;
+  contact: string;
+  contact_type: "email" | "phone";
+  website_url: string | null;
+  page_path: string | null;
+  status: LeadStatus;
+}

@@ -1,14 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon, BookOpenIcon, BriefcaseIcon, TrophyIcon } from "lucide-react";
+import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon, BookOpenIcon, BriefcaseIcon, TrophyIcon, MegaphoneIcon, InboxIcon } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboardIcon },
+  { href: "/admin/leads", label: "Contactos", icon: InboxIcon },
   { href: "/admin/posts", label: "Notas", icon: Newspaper },
   { href: "/admin/glosario", label: "Glosario", icon: BookOpenIcon },
+  { href: "/admin/linkedin", label: "LinkedIn", icon: MegaphoneIcon },
   { href: "/admin/categories", label: "Categorías", icon: FolderIcon },
   { href: "/admin/subcategories", label: "Subcategorías", icon: TagIcon },
   { href: "/admin/category-blocks", label: "Bloques de categoría", icon: LayoutGridIcon },
@@ -42,8 +44,8 @@ export default async function AdminLayout({
     .maybeSingle();
 
   return (
-    <div className="grid min-h-screen grid-cols-[240px_1fr]">
-      <aside className="flex flex-col justify-between border-r bg-muted/20 p-4">
+    <div className="grid min-h-screen grid-cols-[240px_1fr] print:block">
+      <aside className="flex flex-col justify-between border-r bg-muted/20 p-4 print:hidden">
         <div>
           <div className="mb-6 px-2">
             <p className="text-sm font-semibold">Admin del blog</p>
@@ -66,7 +68,7 @@ export default async function AdminLayout({
         </div>
         <SignOutButton />
       </aside>
-      <main className="p-8">{children}</main>
+      <main className="p-8 print:p-0">{children}</main>
     </div>
   );
 }

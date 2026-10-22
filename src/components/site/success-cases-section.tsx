@@ -21,11 +21,11 @@ export function SuccessCasesSection({ cases }: { cases: SuccessCase[] }) {
       aria-labelledby="casos-title"
       // scroll-mt: el ancla "Casos de éxito" del menú deja el título justo
       // debajo del header flotante
-      className="scroll-mt-[var(--site-header-height,77px)] bg-gray-50 pb-16 pt-20 md:pb-24 md:pt-28"
+      className="scroll-mt-[var(--site-header-height,77px)] bg-gray-50 pb-6 pt-16 md:pb-24 md:pt-28"
     >
       <h2
         id="casos-title"
-        className="mb-10 px-10 text-center font-heading text-[2.5rem] font-normal leading-tight tracking-tight text-[#4a4a4a]"
+        className="mb-10 px-6 text-center md:px-10 font-heading text-[2.125rem] font-normal leading-tight md:text-[2.5rem] tracking-tight text-[#4a4a4a]"
       >
         Casos de éxito{" "}
         <span className="font-extralight text-neutral-400">que hablan por nosotros</span>
@@ -35,18 +35,25 @@ export function SuccessCasesSection({ cases }: { cases: SuccessCase[] }) {
           cards son sticky: al scrollear se van apilando una encima de la
           otra (cada una un poco más abajo que la anterior, como las cards de
           "Nuestros servicios"). */}
-      <div className="mx-auto flex max-w-[108rem] flex-col gap-10 px-10">
+      <div className="mx-auto flex max-w-[108rem] flex-col gap-10 px-6 md:px-10">
         {cases.map((c, i) => (
           <div
             key={c.id}
-            className="sticky"
-            style={{ top: `calc(var(--site-header-height, 77px) + 1.5rem + ${i * 0.75}rem)` }}
+            // mobile: el header no queda fijo → se apilan cerca del borde de
+            // arriba; escritorio: debajo del header flotante
+            className="sticky top-[var(--case-top-sm)] md:top-[var(--case-top-md)]"
+            style={
+              {
+                "--case-top-sm": `calc(1rem + ${i * 0.75}rem)`,
+                "--case-top-md": `calc(var(--site-header-height, 77px) + 1.5rem + ${i * 0.75}rem)`,
+              } as React.CSSProperties
+            }
           >
             <SuccessCaseCard item={c} />
           </div>
         ))}
         {/* Aire al final para que la última card llegue a apilarse */}
-        <div aria-hidden className="h-[10svh]" />
+        <div aria-hidden className="h-[3svh] md:h-[10svh]" />
       </div>
     </section>
   );
@@ -67,7 +74,11 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
           alt=""
           loading="lazy"
           decoding="async"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+          // mobile: la card es alta y angosta, así que la imagen no cubre
+          // toda la card (se agrandaba y cortaba mucho): va arriba, a todo el
+          // ancho en 4:3, y se funde hacia abajo con el fondo oscuro donde
+          // va el texto. Escritorio: cubre toda la card como siempre.
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] max-md:bottom-auto max-md:h-auto max-md:aspect-[4/3] max-md:[mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
         />
       )}
       <div aria-hidden className="absolute inset-0 bg-black/20" />
@@ -76,7 +87,7 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
         className="absolute inset-0 bg-gradient-to-t from-black/95 from-15% via-black/60 via-55% to-transparent"
       />
 
-      <div className="relative flex w-full flex-col gap-8 px-8 py-10 md:flex-row md:items-end md:justify-between md:px-14 md:py-14">
+      <div className="relative flex w-full flex-col gap-8 px-5 py-8 md:flex-row md:items-end md:justify-between md:px-14 md:py-14">
         <div className="max-w-3xl">
           {/* Logo del cliente tal cual se subió en /admin/casos (imagen
               personalizada: conviene una versión clara/blanca con fondo
@@ -110,7 +121,7 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
               </span>
             )}
           </div>
-          <h3 className="font-heading text-4xl font-normal leading-[1.1] tracking-tight text-white md:text-5xl">
+          <h3 className="font-heading text-[2rem] font-normal leading-[1.1] tracking-tight text-white md:text-5xl">
             {item.title}
           </h3>
           {item.description && (
@@ -123,7 +134,7 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
         <div className="flex shrink-0 flex-col items-start gap-5 md:items-end md:text-right">
           {item.metric_value && (
             <div>
-              <p className="font-heading text-6xl font-light leading-none tracking-tight text-white md:text-8xl">
+              <p className="font-heading text-5xl font-light leading-none tracking-tight text-white md:text-8xl">
                 {item.metric_value}
               </p>
               {item.metric_label && (

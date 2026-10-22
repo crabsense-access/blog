@@ -68,7 +68,7 @@ export default async function BlogIndexPage() {
   const blogSchemaPosts = Array.from(blogSchemaPostsMap.values());
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-white">
       <JsonLd data={buildBlogSchema(blogSchemaPosts)} />
       <JsonLd data={buildBlogBreadcrumbSchema()} />
       <div className="max-w-[108rem] mx-auto px-10 pb-12">
@@ -102,13 +102,14 @@ export default async function BlogIndexPage() {
         <PostCategoriesStickyNav
           categories={categoriesWithSubcategories}
           showReadingProgress={false}
-          className="w-screen ml-[calc(50%-50vw)]"
+          // mismo fondo que el hero del blog (blanco)
+          className="w-screen ml-[calc(50%-50vw)] bg-white"
           contentClassName="max-w-[108rem] mx-auto px-10"
         />
 
         {/* Bloque Principal */}
         {featuredPost && (
-          <section className="flex h-[calc(100vh-69px)] w-full flex-col overflow-hidden py-12">
+          <section className="flex w-full flex-col py-12">
             <HomeFeaturedRow featuredPost={featuredPost} relatedPosts={relatedPosts} />
           </section>
         )}

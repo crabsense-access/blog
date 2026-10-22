@@ -1,16 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const NAV_LINKS = [
   // Ancla a "Nuestros servicios" de la home (scroll suave)
@@ -23,6 +17,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const isHome = pathname === "/";
   const headerRef = useRef<HTMLElement>(null);
+  const [scrolled, setScrolled] = useState(false);
 
   // Expone el alto real del header como variable CSS, para que otros
   // bloques (ej. el slider de la home, que arranca en top: 0 por debajo
@@ -32,7 +27,11 @@ export function SiteHeader() {
     if (!el) return;
 
     function setHeaderHeightVar() {
-      document.documentElement.style.setProperty("--site-header-height", `${el!.offsetHeight}px`);
+      const h = `${el!.offsetHeight}px`;
+      document.documentElement.style.setProperty("--site-header-height", h);
+      // El header es sticky: los bloques sticky de la página (ej.
+      // PostCategoriesStickyNav) se pegan justo debajo de él.
+      document.documentElement.style.setProperty("--site-header-offset", h);
     }
 
     setHeaderHeightVar();
@@ -41,10 +40,15 @@ export function SiteHeader() {
     return () => observer.disconnect();
   }, []);
 
-  // El header ya no es sticky (se va con el scroll), así que los bloques
-  // sticky de la página (ej. PostCategoriesStickyNav) se pegan arriba de todo.
+  // Arriba de todo el header es transparente (se superpone al hero); al
+  // scrollear toma fondo blanco translúcido para no quedar sobre el contenido.
   useEffect(() => {
-    document.documentElement.style.setProperty("--site-header-offset", "0px");
+    function onScroll() {
+      setScrolled(window.scrollY > 8);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // En la home, los links con ancla ("/#servicios") hacen scroll suave
@@ -62,12 +66,21 @@ export function SiteHeader() {
   return (
     <header
       ref={headerRef}
-      // Header transparente y no fijo: se superpone al hero (que sube por
-      // debajo con margen negativo) y se va con el scroll.
-      className="relative z-50 bg-transparent px-4 md:px-10"
+      // Header sticky: siempre visible arriba. Se superpone al hero (que sube
+      // por debajo con margen negativo); transparente arriba de todo y con
+      // fondo blanco translúcido una vez que se scrollea.
+      className={`sticky top-0 z-50 px-6 md:px-10 transition-[background-color,box-shadow] duration-300 ${
+        // transparente solo arriba de todo en la home (encima del hero); en
+        // el resto de las páginas siempre con fondo (detrás está el footer fijo)
+        !isHome
+          ? "bg-white shadow-[0_1px_0_rgba(15,23,42,0.06)]"
+          : scrolled
+            ? "bg-white/90 shadow-[0_1px_0_rgba(15,23,42,0.06)] backdrop-blur-md"
+            : "bg-transparent"
+      }`}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-4 max-md:justify-center">
           {/* Logo */}
           <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
             {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos, ver post-image.tsx */}
@@ -92,12 +105,12 @@ export function SiteHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-md:hidden">
             {/* CTA Button */}
             {/* Pill en el violeta del servicio Analytics (#53539b) con flecha a 45° */}
             <Button
               asChild
-              className="group h-auto rounded-full bg-[#53539b] py-3.5 pl-9 pr-8 has-[>svg]:pl-9 has-[>svg]:pr-8 text-[0.8rem] uppercase tracking-wide hover:bg-[#3d3c89]"
+              className="group hidden h-auto rounded-full bg-[#53539b] py-3.5 pl-9 pr-8 md:inline-flex has-[>svg]:pl-9 has-[>svg]:pr-8 text-[0.8rem] uppercase tracking-wide hover:bg-[#3d3c89]"
             >
               <Link href="/#contacto" onClick={(e) => handleAnchorClick(e, "/#contacto")}>
                 Contactar
@@ -105,35 +118,20 @@ export function SiteHeader() {
               </Link>
             </Button>
 
-            {/* Mobile Navigation */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-11 rounded-full bg-white/60 md:hidden"
-                >
-                  <Menu className="size-5" />
-                  <span className="sr-only">Abrir menú</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {NAV_LINKS.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild>
-                    <Link
-                      href={link.href}
-                      onClick={(e) => handleAnchorClick(e, link.href)}
-                      className="font-bold uppercase tracking-wide"
-                    >
-                      {link.label}
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
         </div>
       </div>
+
+      {/* Mobile: "Contactar" flotante abajo a la derecha (en escritorio va en
+          el header). Respeta el área segura inferior del iPhone. */}
+      <Link
+        href="/#contacto"
+        onClick={(e) => handleAnchorClick(e, "/#contacto")}
+        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-6 z-50 inline-flex items-center gap-2 rounded-full bg-[#53539b] py-3.5 pl-6 pr-5 text-[0.8rem] font-medium uppercase tracking-wide text-white shadow-[0_10px_30px_-8px_rgba(61,60,137,0.6)] transition-colors hover:bg-[#3d3c89] md:hidden"
+      >
+        Contactar
+        <ArrowUpRight className="size-4.5" />
+      </Link>
     </header>
   );
 }

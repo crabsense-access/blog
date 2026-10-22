@@ -14,3 +14,19 @@ export interface ServiceImage {
   image_url: string | null;
   image_alt: string | null;
 }
+
+/** Problema ("issue") de un servicio, tal como se muestra en la home */
+export interface ServiceIssue {
+  /** el dolor de cabeza, en palabras del cliente */
+  title: string;
+  description: string;
+  /** cómo lo resolvemos (bullets de "Cómo te ayudamos") */
+  help: string[];
+}
+
+/** Fila de la tabla service_issues (editable desde /admin/services) */
+export interface ServiceIssueRow extends ServiceIssue {
+  id: string;
+  service_slug: string;
+  sort_order: number;
+}

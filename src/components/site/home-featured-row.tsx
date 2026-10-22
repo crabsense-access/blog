@@ -10,18 +10,17 @@ interface HomeFeaturedRowProps {
 }
 
 /**
- * Bloque Principal del home del blog: dos columnas de igual alto que
- * reparten el espacio disponible (flex-1 min-h-0). A la izquierda el post
- * destacado en formato vertical completo (imagen + contenido); a la
- * derecha los 2 items horizontales más recientes (MainBlockHorizontalItem,
- * flex-1 cada uno).
+ * Bloque Principal del home del blog: dos columnas de igual alto. El alto lo
+ * marca el destacado de la izquierda (imagen 16:9 + contenido); la columna
+ * derecha se estira a ese mismo alto (stretch del grid) y los 2 items
+ * horizontales se lo reparten en partes iguales (flexShare → flex-1).
  */
 export function HomeFeaturedRow({ featuredPost, relatedPosts }: HomeFeaturedRowProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col pb-16">
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-x-10">
         <div className="flex h-full min-h-0 flex-col gap-4">
-          <FeaturedPostImage post={featuredPost} className="min-h-24 flex-1" />
+          <FeaturedPostImage post={featuredPost} className="aspect-video w-full shrink-0" />
           <FeaturedPostContent
             post={featuredPost}
             className="h-auto shrink-0"

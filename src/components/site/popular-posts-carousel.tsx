@@ -29,6 +29,12 @@ interface PopularPostsCarouselProps {
 }
 
 const SCROLL_AMOUNT = 600;
+
+// Mobile (< 768px): sin flechas; cada artículo es una card (fondo blanco,
+// borde y sombra) que ocupa casi todo el ancho y deja ver un poco la
+// siguiente, para pasarlas deslizando de derecha a izquierda.
+const MOBILE_CARD_CLASS =
+  "max-md:w-[95%] max-md:rounded-3xl max-md:border max-md:border-neutral-200 max-md:bg-white max-md:p-4 max-md:shadow-[0_10px_30px_-12px_rgba(61,60,137,0.25)]";
 const PROMO_INSERT_INDEX = 2;
 
 type CarouselItem =
@@ -90,7 +96,12 @@ export function PopularPostsCarousel({
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className={CAROUSEL_SCROLL_ROW_CLASS}
+          className={cn(
+            CAROUSEL_SCROLL_ROW_CLASS,
+            // mobile: cards más juntas, con el mismo margen lateral que el
+            // resto del sitio y aire arriba/abajo para que no se corte la sombra
+            "max-md:gap-4 max-md:px-6 max-md:py-4 max-md:scroll-px-6",
+          )}
         >
           {/* Flechas superpuestas sobre el borde de la primera/última
               imagen: mismo ancho/aspect-video que una card real (para que
@@ -98,7 +109,7 @@ export function PopularPostsCarousel({
               para quedar fijas en el borde visible al scrollear, con un
               margen negativo que cancela su propio ancho. */}
           {hasOverflow && (
-            <div className="pointer-events-none sticky left-0 top-0 z-10 mr-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center">
+            <div className="pointer-events-none sticky left-0 top-0 z-10 max-md:hidden mr-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center">
               <Button
                 type="button"
                 variant="outline"
@@ -114,7 +125,7 @@ export function PopularPostsCarousel({
           )}
           {items.map((item) =>
             item.type === "promo" ? (
-              <div key="promo" className="w-[calc((100%-3rem)/3.12)] shrink-0 snap-start">
+              <div key="promo" className="w-[calc((100%-3rem)/3.12)] shrink-0 snap-start max-md:w-[95%]">
                 <InstagramPromoBlock />
               </div>
             ) : (
@@ -122,15 +133,21 @@ export function PopularPostsCarousel({
                 key={item.post.id}
                 post={item.post}
                 categoryPillVariant="outline"
-                categoryPillClassName="px-4 py-1 text-base"
-                subcategoryPillClassName="border-2 border-gray-100 bg-gray-100 px-4 py-1 text-base font-medium text-gray-400 hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
-                titleClassName="font-heading font-normal text-2xl lg:text-3xl"
+                categoryPillClassName="px-4 py-1 text-base max-md:px-3 max-md:py-0.5 max-md:text-sm"
+                subcategoryPillClassName="border-2 border-gray-200 bg-transparent px-4 py-1 text-base max-md:px-3 max-md:py-0.5 max-md:text-sm font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
+                titleClassName="font-heading font-normal text-2xl max-md:text-[1.625rem] lg:text-3xl"
                 excerptClassName="text-lg"
+                authorNameClassName="max-md:text-sm"
+                authorTitleClassName="max-md:text-xs"
+                // mobile: la fecha arriba y el autor debajo
+                footerClassName="max-md:flex-col-reverse max-md:items-start"
+                dateClassName="max-md:self-end max-md:pb-2"
+                className={MOBILE_CARD_CLASS}
               />
             )
           )}
           {hasOverflow && (
-            <div className="pointer-events-none sticky right-0 top-0 z-10 ml-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center justify-end">
+            <div className="pointer-events-none sticky right-0 top-0 z-10 max-md:hidden ml-[calc((100%-3rem)/-3.12)] flex aspect-video w-[calc((100%-3rem)/3.12)] shrink-0 self-start items-center justify-end">
               <Button
                 type="button"
                 variant="outline"
