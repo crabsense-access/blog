@@ -10,7 +10,7 @@ import {
   detectContactType,
   normalizeWebsite,
   type LeadService,
-} from "@/lib/validations/lead";
+} from "@/lib/lead-shared";
 
 type Step = "prompt" | "contact" | "done";
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 
+import { optimizedStorageImage } from "@/lib/image-url";
 import { successCaseService, type SuccessCase } from "@/lib/success-cases";
 
 /**
@@ -70,7 +71,9 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
       {item.image_url && (
         // eslint-disable-next-line @next/next/no-img-element -- imagen de Supabase Storage, el proyecto usa <img> plano
         <img
-          src={item.image_url}
+          src={optimizedStorageImage(item.image_url, 1920)}
+          srcSet={[640, 1080, 1920].map((w) => `${optimizedStorageImage(item.image_url!, w)} ${w}w`).join(", ")}
+          sizes="100vw"
           alt=""
           loading="lazy"
           decoding="async"
@@ -88,14 +91,14 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
       />
 
       <div className="relative flex w-full flex-col gap-8 px-5 py-8 md:flex-row md:items-end md:justify-between md:px-14 md:py-14">
-        <div className="max-w-3xl">
+        <div className="min-w-0 max-w-5xl md:flex-1">
           {/* Logo del cliente tal cual se subió en /admin/casos (imagen
               personalizada: conviene una versión clara/blanca con fondo
               transparente para que se lea sobre el fondo oscuro) */}
           {item.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element -- logo de Supabase Storage
             <img
-              src={item.logo_url}
+              src={optimizedStorageImage(item.logo_url, 640)}
               alt={item.client_name}
               loading="lazy"
               decoding="async"
@@ -121,7 +124,7 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
               </span>
             )}
           </div>
-          <h3 className="font-heading text-[2rem] font-normal leading-[1.1] tracking-tight text-white md:text-5xl">
+          <h3 className="font-heading text-[2.25rem] font-normal leading-[1.1] tracking-tight text-white md:text-[3.5rem]">
             {item.title}
           </h3>
           {item.description && (

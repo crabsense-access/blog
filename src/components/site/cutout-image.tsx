@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+import { optimizedStorageImage } from "@/lib/image-url";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,6 +15,12 @@ import { cn } from "@/lib/utils";
  * Mientras procesa (o si falla, por ejemplo por CORS) muestra la imagen
  * original con mix-blend-multiply, que sobre fondo blanco ya disimula el
  * fondo. Si la imagen ya es transparente, se usa tal cual.
+ *
+ * Rendimiento: no baja ni procesa nada hasta que el elemento está cerca de
+ * la vista (las variantes ocultas con display:none nunca cargan), y pide la
+ * imagen redimensionada al tamaño en que se muestra vía /_next/image (en
+ * vez del original de ~1250px), así el recorte también trabaja sobre
+ * muchos menos píxeles.
  */
 export function CutoutImage({
   src,
@@ -27,9 +34,34 @@ export function CutoutImage({
   /** 0-255: a partir de qué valor (en R, G y B) un píxel cuenta como blanco */
   threshold?: number;
 }) {
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [fetchSrc, setFetchSrc] = useState<string | null>(null);
   const [cutSrc, setCutSrc] = useState<string | null>(null);
 
+  // Elegir el ancho recién cuando el elemento se acerca a la vista
   useEffect(() => {
+    const el = imgRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        io.disconnect();
+        const rect = el.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        // object-contain: la figura nunca supera el lado largo de la caja
+        // (+15% por los scale-[1.1x] de algunas imágenes)
+        const shown = Math.max(rect.width, rect.height) > 0 ? Math.max(rect.width, rect.height) : 600;
+        setFetchSrc(optimizedStorageImage(src, Math.ceil(shown * dpr * 1.15)));
+      },
+      { rootMargin: "400px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [src]);
+
+  useEffect(() => {
+    if (!fetchSrc) return;
+    const src = fetchSrc;
     let cancelled = false;
     let objectUrl: string | null = null;
     const img = new Image();
@@ -111,12 +143,13 @@ export function CutoutImage({
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [src, threshold]);
+  }, [fetchSrc, threshold]);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano
     <img
-      src={cutSrc ?? src}
+      ref={imgRef}
+      src={cutSrc ?? fetchSrc ?? undefined}
       alt={alt}
       decoding="async"
       className={cn(className, !cutSrc && "mix-blend-multiply")}

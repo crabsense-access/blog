@@ -1,3 +1,4 @@
+import { optimizedStorageImage } from "@/lib/image-url";
 import { PLACEHOLDER_LOGOS } from "@/lib/placeholder-logos";
 import type { Client } from "@/lib/types";
 
@@ -27,7 +28,10 @@ export function HeroClientLogos({ clients = [] }: { clients?: Client[] }) {
           node: (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={c.logo_url}
+              // Redimensionado (WebP/AVIF, caché larga) por /_next/image: se
+              // muestran a 40px de alto, los PNG originales pesaban hasta 136 KB.
+              // 640px de ancho alcanza a 2x hasta para los logotipos más alargados.
+              src={optimizedStorageImage(c.logo_url, 640)}
               alt={c.name}
               // Sin lazy-loading a propósito: los logos que están fuera de la
               // vista (a la derecha del track) cargaban recién al acercarse y

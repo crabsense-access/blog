@@ -62,3 +62,43 @@ function parseUrl(url: string): URL | null {
     return null;
   }
 }
+
+// Anchos que acepta el optimizador de Next (/_next/image): la unión de los
+// imageSizes y deviceSizes por defecto. Un `w` fuera de esta lista da 400.
+const NEXT_IMAGE_WIDTHS = [32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+
+const SUPABASE_HOST = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
+/** Ancho permitido más chico que sea >= `width` (o el máximo). */
+export function nextImageWidth(width: number): number {
+  return NEXT_IMAGE_WIDTHS.find((w) => w >= width) ?? NEXT_IMAGE_WIDTHS[NEXT_IMAGE_WIDTHS.length - 1];
+}
+
+/**
+ * Pasa una imagen pública de Supabase Storage por el optimizador de Next
+ * (mismo endpoint que usa next/image): la devuelve redimensionada al ancho
+ * pedido, en WebP/AVIF según el navegador y con caché larga
+ * (images.minimumCacheTTL). Sirve para los <img> planos del sitio que no
+ * pueden usar next/image (CutoutImage, marquee de logos). Cualquier otro
+ * host se devuelve sin tocar.
+ */
+export function optimizedStorageImage(url: string, width: number): string {
+  const parsed = parseUrl(url);
+  if (
+    !parsed ||
+    !SUPABASE_HOST ||
+    parsed.hostname !== SUPABASE_HOST ||
+    !parsed.pathname.startsWith("/storage/v1/object/public/")
+  ) {
+    return url;
+  }
+  return `/_next/image?url=${encodeURIComponent(url)}&w=${nextImageWidth(width)}&q=75`;
+}

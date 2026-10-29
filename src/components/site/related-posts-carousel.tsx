@@ -97,7 +97,7 @@ export function RelatedPostsCarousel({ title, posts, className }: RelatedPostsCa
             categoryPillVariant="outline"
             categoryPillClassName="px-4 py-1 text-base"
             subcategoryPillClassName="border-2 border-gray-200 bg-transparent px-4 py-1 text-base font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
-            titleClassName="font-heading font-normal text-2xl lg:text-3xl"
+            titleClassName="font-heading font-normal line-clamp-3 text-[1.625rem] leading-[1.15] lg:text-[2rem]"
             excerptClassName="text-lg"
           />
         ))}

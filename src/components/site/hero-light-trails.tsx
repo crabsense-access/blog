@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { onFirstInteraction } from "@/lib/defer";
+
 /**
  * Fondo del hero: estelas horizontales de luz (tipo "data streams") que
  * corren de izquierda a derecha a distintas velocidades, agrupadas en bandas,
@@ -134,8 +136,14 @@ export function HeroLightTrails({ className = "" }: { className?: string }) {
       }
       draw();
     };
-    raf = requestAnimationFrame(loop);
+    // Se queda en el cuadro estático hasta la primera interacción, así no
+    // ocupa el hilo principal durante la carga (ver lib/defer.ts).
+    const stopWaiting = onFirstInteraction(() => {
+      last = performance.now();
+      raf = requestAnimationFrame(loop);
+    });
     return () => {
+      stopWaiting();
       cancelAnimationFrame(raf);
       ro.disconnect();
       io.disconnect();

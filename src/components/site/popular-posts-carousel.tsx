@@ -135,7 +135,7 @@ export function PopularPostsCarousel({
                 categoryPillVariant="outline"
                 categoryPillClassName="px-4 py-1 text-base max-md:px-3 max-md:py-0.5 max-md:text-sm"
                 subcategoryPillClassName="border-2 border-gray-200 bg-transparent px-4 py-1 text-base max-md:px-3 max-md:py-0.5 max-md:text-sm font-medium text-[#828a97] hover:border-gray-300 hover:bg-gray-300 hover:text-gray-700"
-                titleClassName="font-heading font-normal text-2xl max-md:text-[1.625rem] lg:text-3xl"
+                titleClassName="font-heading font-normal line-clamp-3 text-[1.625rem] leading-[1.15] max-md:text-[1.75rem] lg:text-[2rem]"
                 excerptClassName="text-lg"
                 authorNameClassName="max-md:text-sm"
                 authorTitleClassName="max-md:text-xs"

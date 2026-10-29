@@ -3,7 +3,6 @@ import { Google_Sans_Flex } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
-import { Toaster } from "@/components/ui/sonner";
 import { getPublicSiteSettings } from "@/lib/queries/site-settings";
 
 const googleSansFlex = Google_Sans_Flex({
@@ -96,7 +95,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           </Script>
         )}
         {children}
-        <Toaster />
       </body>
     </html>
   );

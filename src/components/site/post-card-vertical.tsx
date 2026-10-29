@@ -67,6 +67,10 @@ export function PostCardVerticalContent({
           src={post.cover_image_url}
           alt={post.title}
           className="aspect-video w-full rounded"
+          // las cards viven en carruseles (~1/3 del ancho en escritorio,
+          // ~95% en celular), casi siempre fuera de la primera pantalla
+          loading="lazy"
+          sizes="(min-width: 768px) 34vw, 95vw"
         />
       </Link>
 

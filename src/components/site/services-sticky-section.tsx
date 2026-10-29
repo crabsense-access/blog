@@ -418,8 +418,9 @@ function ServiceBlock({
                 service.id === "analytics" && "origin-bottom scale-[1.10]",
                 // ADS (catapulta): un poco más grande, creciendo desde la base
                 service.id === "ads" && "origin-bottom scale-[1.15]",
-                // SEO & GEO: un poco más grande, creciendo desde la base
-                service.id === "seo" && "origin-bottom scale-[1.15]",
+                // SEO & GEO: tamaño natural y tono blanco igualado al del
+                // Coliseo de Analytics (la imagen original es más crema/gris)
+                service.id === "seo" && "origin-bottom brightness-105 contrast-[1.06] saturate-[0.45]",
               )}
             />
           )}
@@ -477,8 +478,9 @@ function ServiceBlock({
               alt=""
               className={cn(
                 "pointer-events-none absolute bottom-[70px] left-1/2 z-[5] h-[82%] w-[110%] -translate-x-1/2 origin-bottom scale-[1.08] select-none object-contain object-bottom drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]",
-                // SEO (celular): la imagen un poco más abajo
-                service.id === "seo" && "max-md:bottom-[50px]",
+                // SEO (celular): la imagen un poco más abajo, más chica y
+                // con el mismo tono blanco que Analytics
+                service.id === "seo" && "max-md:bottom-[50px] scale-[0.95] brightness-105 contrast-[1.06] saturate-[0.45]",
               )}
             />
           </div>
@@ -512,7 +514,7 @@ function ServiceBlock({
             data-stack-card
             // sombra hacia arriba más marcada: la card que entra proyecta
             // sombra sobre la de atrás
-            className="rounded-[28px] border border-neutral-200 bg-white p-5 shadow-[0_-16px_40px_-12px_rgba(0,0,0,0.28)] md:p-10 sticky top-[var(--stack-top-sm)] lg:top-[var(--stack-top-lg)] lg:min-h-[30rem]"
+            className="rounded-[28px] border border-neutral-200 bg-white p-5 shadow-[0_-6px_16px_-8px_rgba(0,0,0,0.10)] md:p-10 sticky top-[var(--stack-top-sm)] lg:top-[var(--stack-top-lg)] lg:min-h-[30rem]"
             style={
               {
                 // escritorio: debajo del header (y del título fijo)
@@ -529,7 +531,7 @@ function ServiceBlock({
                 se superponga ni achique el título de abajo. */}
             <div className="flex items-start justify-between gap-4">
               <span
-                className="text-sm font-bold uppercase tracking-wide"
+                className="text-base font-bold uppercase tracking-wide"
                 style={{ color: service.color }}
               >
                 Problema {String(i + 1).padStart(2, "0")}
@@ -539,29 +541,29 @@ function ServiceBlock({
                 className="pointer-events-none -mr-2 w-12 shrink-0 md:-mr-4 md:w-[4.5rem]"
               />
             </div>
-            <h4 className="mt-3 font-heading text-[1.625rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2rem]">
+            <h4 className="mt-3 font-heading text-[1.875rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2.375rem]">
               {issue.title}
             </h4>
-            <p className="mt-2 font-heading text-lg font-extralight leading-snug text-[#4a4a4a] md:text-xl">
+            <p className="mt-2 font-heading text-xl font-extralight leading-snug text-[#4a4a4a] md:text-2xl">
               {issue.description}
             </p>
             <div className="mt-5 border-t border-neutral-200 pt-10">
-              <p className="text-sm font-semibold uppercase tracking-wide text-[#4a4a4a]">
+              <p className="text-base font-semibold uppercase tracking-wide text-[#4a4a4a]">
                 Cómo te ayudamos
               </p>
               <ul className="mt-4 space-y-3">
                 {issue.help.map((item) => (
                   <li
                     key={item}
-                    className="flex items-start gap-2.5 text-[15px] text-[#4a4a4a] md:text-base"
+                    className="flex items-start gap-2.5 text-base text-[#4a4a4a] md:text-lg"
                   >
                     {/* tilde dentro de un círculo en el color del servicio */}
                     <span
                       aria-hidden
-                      className="mt-[3px] flex size-[18px] shrink-0 items-center justify-center rounded-full"
+                      className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full"
                       style={{ backgroundColor: service.color }}
                     >
-                      <Check className="size-3 text-white" strokeWidth={3} />
+                      <Check className="size-3.5 text-white" strokeWidth={3} />
                     </span>
                     {item}
                   </li>

@@ -4,11 +4,13 @@ import { HeroSolaris } from "@/components/site/hero-solaris";
 import { HeroPromptBox } from "@/components/site/hero-prompt-box";
 import { ContactForm } from "@/components/site/contact-form";
 import { HeroAurora } from "@/components/site/hero-aurora";
-import { HeroLines } from "@/components/site/hero-lines";
-import { HeroStreaks } from "@/components/site/hero-streaks";
-import { HeroWave } from "@/components/site/hero-wave";
 import { HeroLightTrails } from "@/components/site/hero-light-trails";
-import { HeroGradient } from "@/components/site/hero-gradient";
+import {
+  HeroGradientTest,
+  HeroLinesTest,
+  HeroStreaksTest,
+  HeroWaveTest,
+} from "@/components/site/hero-test-backgrounds";
 import { TagPill } from "@/components/site/tag-pill";
 import { ServicesStickySection } from "@/components/site/services-sticky-section";
 import { HeroClientLogos } from "@/components/site/hero-client-logos";
@@ -61,7 +63,7 @@ export default async function HomePage({
           gradientTest && "lg:[&_h1]:text-white lg:[&_h2]:text-white",
         )}
       >
-        {gradientTest && <HeroGradient className="absolute inset-0 hidden lg:block" />}
+        {gradientTest && <HeroGradientTest className="absolute inset-0 hidden lg:block" />}
         {/* Fondo: estelas horizontales de luz que corren hacia la derecha
             (transparente). Pruebas anteriores para comparar: /?hero=onda
             (cinta ondulada), /?hero=estelas (estelas de luz convergentes),
@@ -77,11 +79,11 @@ export default async function HomePage({
             desktopAvoidBottom
           />
         ) : linesTest ? (
-          <HeroLines className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
+          <HeroLinesTest className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
         ) : streaksTest ? (
-          <HeroStreaks className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
+          <HeroStreaksTest className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
         ) : waveTest ? (
-          <HeroWave className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
+          <HeroWaveTest className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
         ) : (
           <HeroLightTrails className={cn("absolute inset-0 h-full w-full", gradientTest && "lg:hidden")} />
         )}
@@ -103,15 +105,21 @@ export default async function HomePage({
         {/* Estatua: en escritorio, centrada (horizontal y vertical) en la columna
             de la derecha: x = 77.5% (centro de la columna de 45vw), y = punto medio
             entre el borde inferior del header y el fondo del hero. */}
-        {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos */}
-        <img
-          src="/hero-estatua.webp"
-          alt="Estatua romana sentada usando un smartphone y auriculares"
-          width={656}
-          height={1175}
-          fetchPriority="high"
-          className="pointer-events-none absolute left-[77.5%] top-[calc((var(--site-header-height,69px)+100%)/2)] z-[5] hidden h-[74%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 select-none lg:block drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]"
-        />
+        {/* <picture>: la estatua solo se ve en escritorio. Un <img> con
+            display:none igual se descarga (110 KB con prioridad alta), así
+            que en mobile el <img> apunta a un GIF vacío y solo desde 1024px
+            el <source> pide la estatua. */}
+        <picture>
+          <source media="(min-width: 1024px)" srcSet="/hero-estatua.webp" type="image/webp" />
+          <img
+            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+            alt="Estatua romana sentada usando un smartphone y auriculares"
+            width={656}
+            height={1175}
+            fetchPriority="high"
+            className="pointer-events-none absolute left-[77.5%] top-[calc((var(--site-header-height,69px)+100%)/2)] z-[5] hidden h-[74%] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 select-none lg:block drop-shadow-[0_20px_40px_rgba(61,60,137,0.18)]"
+          />
+        </picture>
         {/* Hero en dos columnas en escritorio: izquierda 55vw (bloque de texto +
             prompt, centrado) y derecha 45vw (estatua + anillo Solaris, centrados
             en 55 + 45/2 = 77.5%). En escritorio el bloque gris ocupa todo el alto
@@ -120,7 +128,7 @@ export default async function HomePage({
             centrado verticalmente adentro. */}
         <div className="relative z-10 max-md:z-auto w-full px-6 md:px-10 lg:px-0 lg:pb-[max(4svh,24px)] lg:pt-[calc(var(--site-header-height,69px)+max(4svh,24px))]">
           <div className="flex justify-center lg:h-full lg:w-[55vw] lg:px-10">
-            <div className="relative w-full max-w-2xl py-6 max-md:flex max-md:flex-col max-md:items-center md:p-10 lg:flex lg:h-full lg:w-full lg:max-w-[52rem] lg:flex-col lg:[justify-content:safe_center] lg:*:shrink-0">
+            <div className="@container relative w-full max-w-2xl py-6 max-md:flex max-md:flex-col max-md:items-center md:p-10 lg:flex lg:h-full lg:w-full lg:max-w-[52rem] lg:flex-col lg:[justify-content:safe_center] lg:*:shrink-0">
               {hero_pill_text && (
                 // Pill sólida: fondo violeta de Crabsense y texto blanco.
                 <TagPill
@@ -133,7 +141,10 @@ export default async function HomePage({
                 </TagPill>
               )}
               {hero_title && (
-                <h1 className="mb-14 text-balance font-heading max-md:relative max-md:z-[7] max-md:text-center text-[3rem] font-normal leading-[1.05] tracking-[-0.04em] text-[#4a4a4a] sm:text-6xl md:text-7xl">
+                // Desde md el tamaño es fluido (11.5cqw del bloque de texto) para que
+                // el título entre siempre en 2 líneas: la línea más larga ("Crece con
+                // tus datos") mide ~8.4em en Google Sans Flex con este tracking.
+                <h1 className="mb-14 text-balance font-heading max-md:relative max-md:z-[7] max-md:text-center text-[3.375rem] font-normal leading-[1.05] tracking-[-0.04em] text-[#4a4a4a] sm:text-[4.25rem] md:text-[11.5cqw]">
                   {hero_title}
                 </h1>
               )}

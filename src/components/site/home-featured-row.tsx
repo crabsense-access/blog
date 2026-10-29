@@ -24,7 +24,7 @@ export function HomeFeaturedRow({ featuredPost, relatedPosts }: HomeFeaturedRowP
           <FeaturedPostContent
             post={featuredPost}
             className="h-auto shrink-0"
-            titleClassName="text-[2.5rem]"
+            titleClassName="text-[2.75rem] leading-[1.1]"
             excerptClassName="text-lg"
           />
         </div>
@@ -33,7 +33,11 @@ export function HomeFeaturedRow({ featuredPost, relatedPosts }: HomeFeaturedRowP
           {relatedPosts.map((post, index) => (
             <Fragment key={post.id}>
               {index > 0 && <div className="my-5 border-t border-gray-200" />}
-              <MainBlockHorizontalItem post={post} flexShare />
+              <MainBlockHorizontalItem
+                post={post}
+                flexShare
+                titleClassName="line-clamp-3 min-h-0 text-[1.625rem] leading-[1.15] lg:text-[2rem]"
+              />
             </Fragment>
           ))}
         </div>

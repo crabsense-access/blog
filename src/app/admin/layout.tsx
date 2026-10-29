@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LayoutDashboardIcon, Newspaper, FolderIcon, TagIcon, LayoutGridIcon, UsersIcon, Building2Icon, SettingsIcon, BookOpenIcon, BriefcaseIcon, TrophyIcon, MegaphoneIcon, InboxIcon } from "lucide-react";
 
+import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
 
@@ -69,6 +70,9 @@ export default async function AdminLayout({
         <SignOutButton />
       </aside>
       <main className="p-8 print:p-0">{children}</main>
+      {/* Los toasts solo se usan en el admin: fuera del layout raíz, sonner
+          no entra en el JS del sitio público. */}
+      <Toaster />
     </div>
   );
 }
