@@ -31,9 +31,11 @@ export function HeroClientLogos({ clients = [] }: { clients?: Client[] }) {
               // Redimensionado (WebP/AVIF, caché larga) por /_next/image: se
               // muestran a 40px de alto (~70-250px de ancho), los PNG
               // originales pesaban hasta 136 KB. El navegador elige del srcset
-              // según la densidad de pantalla.
-              src={optimizedStorageImage(c.logo_url, 320)}
-              srcSet={storageImageSrcSet(c.logo_url, [128, 160, 192, 256, 320, 384])}
+              // según la densidad de pantalla. Solo 3 anchos: cada logo se
+              // repite ~32 veces en el marquee y cada URL de /_next/image es
+              // larga, así que un srcset más largo inflaba mucho el HTML.
+              src={optimizedStorageImage(c.logo_url, 256)}
+              srcSet={storageImageSrcSet(c.logo_url, [160, 256, 384])}
               sizes="160px"
               alt={c.name}
               // Sin lazy-loading a propósito: los logos que están fuera de la

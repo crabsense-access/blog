@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { HeroSolaris } from "@/components/site/hero-solaris";
@@ -172,83 +173,98 @@ export default async function HomePage({
       </section>
 
       {/* Nuestros servicios: columna izquierda sticky + 4 tarjetas que pasan */}
-      <ServicesStickySection images={serviceImages} issues={serviceIssues} />
+      {/* Cada sección de abajo del hero va en su propio <Suspense>: React
+          hidrata cada límite por separado y cediendo el hilo entre uno y
+          otro, en vez de hidratar toda la home en una sola tarea larga
+          (PageSpeed: Total Blocking Time). No cambia nada visualmente: el
+          HTML llega completo del servidor igual que antes. */}
+      <Suspense>
+        <ServicesStickySection images={serviceImages} issues={serviceIssues} />
+      </Suspense>
 
       {/* Casos de éxito (admin: /admin/casos): cards a todo el ancho */}
-      <SuccessCasesSection cases={successCases} />
+      <Suspense>
+        <SuccessCasesSection cases={successCases} />
+      </Suspense>
 
       {/* Más vistos: misma sección que la home del blog, con el mismo
           contenedor (max-w-[108rem] px-10) que usa el carrusel para
           alinear el título y las flechas */}
       {popularPosts.length > 0 && (
-        <div className="max-w-[108rem] mx-auto px-6 md:px-10">
-          <PopularPostsCarousel
-            posts={popularPosts}
-            background={false}
-            showPromo={false}
-            title={
-              // Mobile: mismo estilo que el título de "Casos de éxito":
-              // "Blog" más marcado, una barra y "Más vistos" fino y en gris,
-              // en una línea centrada.
-              // Escritorio: "Blog / Artículos más vistos" como siempre.
-              <span className="max-md:text-[2.125rem] max-md:leading-tight">
-                <Link
+        <Suspense>
+          <div className="max-w-[108rem] mx-auto px-6 md:px-10">
+            <PopularPostsCarousel
+              // sin el cuerpo de cada nota: las cards no lo usan y, como el
+              // carrusel es un Client Component, viajaba entero en el HTML
+              posts={popularPosts.map((p) => ({ ...p, content: "" }))}
+              background={false}
+              showPromo={false}
+              title={
+                // Mobile: mismo estilo que el título de "Casos de éxito":
+                // "Blog" más marcado, una barra y "Más vistos" fino y en gris,
+                // en una línea centrada.
+                // Escritorio: "Blog / Artículos más vistos" como siempre.
+                <span className="max-md:text-[2.125rem] max-md:leading-tight">
+                  <Link
+                    href="/blog"
+                    className="font-medium text-[#4a4a4a] underline-offset-8 transition-colors hover:underline md:font-normal md:text-[#535396] md:hover:text-[#3d3c89]"
+                  >
+                    Blog
+                  </Link>
+                  <span className="mx-2 font-extralight text-neutral-300 md:mx-3 md:font-normal" aria-hidden>
+                    /
+                  </span>
+                  {/* escritorio: mismo gris que el titular del hero */}
+                  <span className="font-extralight text-[#8a8a8a] md:font-normal md:text-[#4a4a4a]">
+                    <span className="hidden md:inline">Artículos más vistos</span>
+                    <span className="md:hidden">Más vistos</span>
+                  </span>
+                </span>
+              }
+              action={
+                <TagPill
                   href="/blog"
-                  className="font-medium text-[#4a4a4a] underline-offset-8 transition-colors hover:underline md:font-normal md:text-[#535396] md:hover:text-[#3d3c89]"
+                  tone="category"
+                  variant="outline"
+                  color="#535396"
+                  className="px-4 py-1 text-base"
                 >
-                  Blog
-                </Link>
-                <span className="mx-2 font-extralight text-neutral-300 md:mx-3 md:font-normal" aria-hidden>
-                  /
-                </span>
-                {/* escritorio: mismo gris que el titular del hero */}
-                <span className="font-extralight text-[#8a8a8a] md:font-normal md:text-[#4a4a4a]">
-                  <span className="hidden md:inline">Artículos más vistos</span>
-                  <span className="md:hidden">Más vistos</span>
-                </span>
-              </span>
-            }
-            action={
-              <TagPill
-                href="/blog"
-                tone="category"
-                variant="outline"
-                color="#535396"
-                className="px-4 py-1 text-base"
-              >
-                Ver más artículos
-              </TagPill>
-            }
-          />
-        </div>
+                  Ver más artículos
+                </TagPill>
+              }
+            />
+          </div>
+        </Suspense>
       )}
 
       {/* CTA final: fondo gris claro, formulario de contacto (se guarda en leads) y,
           bien grande por detrás del formulario, el anillo animado de
           colores del hero. */}
-      <section
-        id="contacto"
-        // ancla del botón "Contactar" del header
-        className="relative scroll-mt-[var(--site-header-height,77px)] overflow-hidden bg-neutral-100 py-32 text-[#4a4a4a] md:py-44"
-      >
-        <HeroSolaris
-          anchorX={0.5}
-          anchorY={0.5}
-          size={0.38}
-          background={false}
-          scrollExplode={false}
-          fixedAnchor
-          // mobile: un poco más arriba y más grande
-          mobileAnchorY={0.42}
-          mobileSize={0.46}
-        />
-        <div className="relative z-10 mx-auto max-w-[108rem] px-6 md:px-10">
-          <h2 className="mb-5 text-center font-heading text-4xl leading-tight tracking-tight md:mb-10 md:text-[3.5rem]">
-            ¿Listo para transformar tu negocio?
-          </h2>
-          <ContactForm className="mx-auto max-w-3xl" />
-        </div>
-      </section>
+      <Suspense>
+        <section
+          id="contacto"
+          // ancla del botón "Contactar" del header
+          className="relative scroll-mt-[var(--site-header-height,77px)] overflow-hidden bg-neutral-100 py-32 text-[#4a4a4a] md:py-44"
+        >
+          <HeroSolaris
+            anchorX={0.5}
+            anchorY={0.5}
+            size={0.38}
+            background={false}
+            scrollExplode={false}
+            fixedAnchor
+            // mobile: un poco más arriba y más grande
+            mobileAnchorY={0.42}
+            mobileSize={0.46}
+          />
+          <div className="relative z-10 mx-auto max-w-[108rem] px-6 md:px-10">
+            <h2 className="mb-5 text-center font-heading text-4xl leading-tight tracking-tight md:mb-10 md:text-[3.5rem]">
+              ¿Listo para transformar tu negocio?
+            </h2>
+            <ContactForm className="mx-auto max-w-3xl" />
+          </div>
+        </section>
+      </Suspense>
     </main>
   );
 }
