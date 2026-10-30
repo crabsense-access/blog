@@ -443,9 +443,9 @@ function ServiceBlock({
         {image?.image_alt && (
           <p
             className={cn(
-              "mt-5 font-heading text-[1.75rem] font-normal leading-[1.1] tracking-tight text-[#5e5e5e] lg:hidden",
+              "mt-5 font-heading text-[1.75rem] font-normal leading-[1.2] tracking-tight text-[#5e5e5e] lg:hidden",
               // Analytics, SEO y ADS: texto más grande y aire con la imagen de abajo
-              WITH_MOBILE_IMAGE.includes(service.id) && "pb-6 text-[2rem] leading-[1]",
+              WITH_MOBILE_IMAGE.includes(service.id) && "pb-6 text-[2rem] leading-[1.15]",
             )}
           >
             {image.image_alt}
@@ -520,29 +520,29 @@ function ServiceBlock({
               {
                 // escritorio: debajo del header (y del título fijo)
                 "--stack-top-lg": `calc(${stackBase} + ${i * STACK_STEP_REM}rem)`,
-                // mobile: el header no queda fijo, así que se apilan desde
-                // arriba de la pantalla, cada una un poco más abajo
-                "--stack-top-sm": `calc(1rem + ${i * 0.75}rem)`,
+                // mobile (y tablet): el header también queda fijo arriba, así
+                // que se apilan debajo de él, cada una un poco más abajo
+                "--stack-top-sm": `calc(var(--site-header-height,72px) + 1rem + ${i * 0.75}rem)`,
               } as React.CSSProperties
             }
           >
-            {/* Fila de arriba: "Problema NN" a la izquierda y la comilla
+            {/* Fila de arriba: "Issue #N" a la izquierda y la comilla
                 decorativa a la derecha (en el color del servicio, muy
                 clarito). Van en su propia fila para que la comilla nunca
                 se superponga ni achique el título de abajo. */}
             <div className="flex items-start justify-between gap-4">
               <span
-                className="text-base font-bold uppercase tracking-wide"
+                className="pt-2 text-base font-bold uppercase tracking-wide md:pt-3"
                 style={{ color: readableOn(service.color) }}
               >
-                Problema {String(i + 1).padStart(2, "0")}
+                Issue #{i + 1}
               </span>
               <QuoteMark
                 color={service.color}
-                className="pointer-events-none -mr-2 w-12 shrink-0 md:-mr-4 md:w-[4.5rem]"
+                className="pointer-events-none mr-1 w-10 shrink-0 md:mr-0 md:w-16"
               />
             </div>
-            <h4 className="mt-3 font-heading text-[1.875rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2.375rem]">
+            <h4 className="mt-3 font-heading text-[1.5rem] font-normal leading-[1.1] tracking-tight text-[#4a4a4a] md:text-[2.375rem]">
               {issue.title}
             </h4>
             <p className="mt-2 font-heading text-xl font-extralight leading-snug text-[#4a4a4a] md:text-2xl">

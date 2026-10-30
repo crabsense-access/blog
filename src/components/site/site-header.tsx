@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
@@ -18,6 +18,24 @@ export function SiteHeader() {
   const isHome = pathname === "/";
   const headerRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
+  // Menú mobile: se guarda en qué página se abrió, así al navegar a otra
+  // queda cerrado solo. También se cierra con Esc y bloquea el scroll de fondo.
+  const [menuOpenAt, setMenuOpenAt] = useState<string | null>(null);
+  const menuOpen = menuOpenAt === pathname;
+  const setMenuOpen = (open: boolean) => setMenuOpenAt(open ? pathname : null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpenAt(null);
+    };
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [menuOpen]);
 
   // Expone el alto real del header como variable CSS, para que otros
   // bloques (ej. el slider de la home, que arranca en top: 0 por debajo
@@ -55,15 +73,19 @@ export function SiteHeader() {
   // hasta la sección sin recargar; desde otras páginas navegan a la home y
   // bajan a la sección.
   function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    setMenuOpen(false);
     if (!isHome || !href.startsWith("/#")) return;
     const target = document.getElementById(href.slice(2));
     if (!target) return;
     e.preventDefault();
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    // con el menú mobile abierto, esperar a que se cierre (y se libere el
+    // scroll del body) antes de bajar a la sección
+    requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }));
     window.history.replaceState(null, "", href);
   }
 
   return (
+    <>
     <header
       ref={headerRef}
       // Header sticky: siempre visible arriba. Se superpone al hero (que sube
@@ -74,13 +96,13 @@ export function SiteHeader() {
         // el resto de las páginas siempre con fondo (detrás está el footer fijo)
         !isHome
           ? "bg-white shadow-[0_1px_0_rgba(15,23,42,0.06)]"
-          : scrolled
+          : scrolled || menuOpen
             ? "bg-white/90 shadow-[0_1px_0_rgba(15,23,42,0.06)] backdrop-blur-md"
             : "bg-transparent"
       }`}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between py-4 max-md:justify-center">
+        <div className="relative flex items-center justify-between py-4 max-md:justify-center">
           {/* Logo */}
           <Link href="/" className="shrink-0 transition-opacity hover:opacity-80">
             {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos, ver post-image.tsx */}
@@ -94,6 +116,18 @@ export function SiteHeader() {
               className="block h-10 w-auto"
             />
           </Link>
+
+          {/* Mobile: menú hamburguesa (a la derecha; el logo queda centrado) */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+            className="absolute -right-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-slate-700 transition-colors hover:bg-slate-100 md:hidden"
+          >
+            {menuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
 
           {/* Navigation */}
           <nav className="hidden md:flex gap-12">
@@ -126,8 +160,33 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile: "Contactar" flotante abajo a la derecha (en escritorio va en
-          el header). Respeta el área segura inferior del iPhone. */}
+    </header>
+
+      {/* Mobile: panel del menú, debajo del header (también fuera del
+          <header> por el mismo motivo que el botón "Contactar") */}
+      {menuOpen && (
+        <nav
+          id="mobile-menu"
+          aria-label="Menú principal"
+          className="fixed inset-x-0 bottom-0 top-[var(--site-header-height,72px)] z-40 flex flex-col gap-2 overflow-y-auto bg-white px-6 pb-28 pt-8 md:hidden"
+        >
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={(e) => handleAnchorClick(e, link.href)}
+              className="border-b border-neutral-200 py-5 font-heading text-[1.75rem] font-normal tracking-tight text-[#4a4a4a] transition-colors hover:text-[#53539b]"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {/* Mobile: "Contactar" fijo abajo a la derecha (en escritorio va en el
+          header). Va FUERA del <header>: el header usa backdrop-blur al
+          scrollear, y un backdrop-filter convierte al header en el bloque
+          contenedor de sus hijos "fixed", así que el botón dejaba de quedar
+          pegado al fondo de la pantalla. Respeta el área segura del iPhone. */}
       <Link
         href="/#contacto"
         onClick={(e) => handleAnchorClick(e, "/#contacto")}
@@ -136,6 +195,6 @@ export function SiteHeader() {
         Contactar
         <ArrowUpRight className="size-4.5" />
       </Link>
-    </header>
+    </>
   );
 }

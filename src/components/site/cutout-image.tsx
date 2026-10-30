@@ -7,21 +7,62 @@ import { cn } from "@/lib/utils";
 
 /**
  * Muestra una imagen y, si tiene fondo blanco sólido (no es un PNG
- * transparente), le quita ese fondo en el navegador: pinta de transparente
- * los píxeles casi blancos conectados con el borde de la imagen (flood
- * fill), así lo que está detrás (ej. el anillo animado) queda por detrás de
- * la figura y no se ve a través de sus partes blancas interiores.
+ * transparente), le quita ese fondo: pinta de transparente los píxeles casi
+ * blancos conectados con el borde de la imagen (flood fill), así lo que está
+ * detrás (ej. el anillo animado) queda por detrás de la figura y no se ve a
+ * través de sus partes blancas interiores.
  *
- * Mientras procesa (o si falla, por ejemplo por CORS) muestra la imagen
- * original con mix-blend-multiply, que sobre fondo blanco ya disimula el
- * fondo. Si la imagen ya es transparente, se usa tal cual.
+ * Mientras procesa (o si falla, o el navegador no soporta workers con
+ * OffscreenCanvas) muestra la imagen original con mix-blend-multiply, que
+ * sobre fondo blanco ya disimula el fondo. Si ya es transparente, se usa tal
+ * cual.
  *
  * Rendimiento: no baja ni procesa nada hasta que el elemento está cerca de
- * la vista (las variantes ocultas con display:none nunca cargan), y pide la
- * imagen redimensionada al tamaño en que se muestra vía /_next/image (en
- * vez del original de ~1250px), así el recorte también trabaja sobre
- * muchos menos píxeles.
+ * la vista (las variantes ocultas con display:none nunca cargan), pide la
+ * imagen redimensionada al tamaño en que se muestra vía /_next/image, y el
+ * recorte corre en un Web Worker (cutout.worker.ts), fuera del hilo
+ * principal.
  */
+
+type WorkerRes =
+  | { id: number; status: "cut"; blob: Blob }
+  | { id: number; status: "transparent" }
+  | { id: number; status: "error" };
+
+let worker: Worker | null | undefined;
+let nextId = 0;
+const pending = new Map<number, (r: WorkerRes) => void>();
+
+function getWorker(): Worker | null {
+  if (worker !== undefined) return worker;
+  try {
+    if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") {
+      worker = null;
+    } else {
+      worker = new Worker(new URL("./cutout.worker.ts", import.meta.url), { type: "module" });
+      worker.onmessage = (e: MessageEvent<WorkerRes>) => {
+        pending.get(e.data.id)?.(e.data);
+        pending.delete(e.data.id);
+      };
+    }
+  } catch {
+    worker = null;
+  }
+  return worker;
+}
+
+function cutout(url: string, threshold: number): Promise<WorkerRes> | null {
+  const w = getWorker();
+  if (!w) return null;
+  const id = ++nextId;
+  // el worker resuelve URLs relativas contra su propio script: pasar absoluta
+  const absolute = new URL(url, window.location.href).toString();
+  return new Promise((resolve) => {
+    pending.set(id, resolve);
+    w.postMessage({ id, url: absolute, threshold });
+  });
+}
+
 export function CutoutImage({
   src,
   alt,
@@ -46,7 +87,8 @@ export function CutoutImage({
       ([e]) => {
         if (!e.isIntersecting) return;
         io.disconnect();
-        const rect = el.getBoundingClientRect();
+        // el rect que trae el observer (sin forzar un reflow)
+        const rect = e.boundingClientRect;
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
         // object-contain con figuras casi cuadradas: se ven del tamaño del
         // lado corto de la caja
@@ -61,84 +103,17 @@ export function CutoutImage({
 
   useEffect(() => {
     if (!fetchSrc) return;
-    const src = fetchSrc;
     let cancelled = false;
     let objectUrl: string | null = null;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0);
-        const data = ctx.getImageData(0, 0, w, h);
-        const d = data.data;
-
-        // si ya tiene transparencia en las esquinas, no hace falta recortar
-        const corners = [0, w - 1, (h - 1) * w, h * w - 1];
-        if (corners.some((i) => d[i * 4 + 3] < 250)) {
-          setCutSrc(src);
-          return;
-        }
-
-        const isWhite = (i: number) =>
-          d[i * 4] >= threshold && d[i * 4 + 1] >= threshold && d[i * 4 + 2] >= threshold;
-        const seen = new Uint8Array(w * h);
-        const stack: number[] = [];
-        const push = (i: number) => {
-          if (!seen[i] && isWhite(i)) {
-            seen[i] = 1;
-            stack.push(i);
-          }
-        };
-        for (let x = 0; x < w; x++) {
-          push(x);
-          push((h - 1) * w + x);
-        }
-        for (let y = 0; y < h; y++) {
-          push(y * w);
-          push(y * w + w - 1);
-        }
-        while (stack.length) {
-          const i = stack.pop()!;
-          d[i * 4 + 3] = 0;
-          const x = i % w;
-          if (x > 0) push(i - 1);
-          if (x < w - 1) push(i + 1);
-          if (i >= w) push(i - w);
-          if (i < w * (h - 1)) push(i + w);
-        }
-        // borde suave: los píxeles de la figura pegados al fondo quitado
-        // quedan semitransparentes según qué tan claros son
-        for (let i = 0; i < w * h; i++) {
-          if (seen[i]) continue;
-          const x = i % w;
-          const nearBg =
-            (x > 0 && seen[i - 1]) ||
-            (x < w - 1 && seen[i + 1]) ||
-            (i >= w && seen[i - w]) ||
-            (i < w * (h - 1) && seen[i + w]);
-          if (nearBg) {
-            const light = Math.min(d[i * 4], d[i * 4 + 1], d[i * 4 + 2]);
-            if (light > 200) d[i * 4 + 3] = Math.round(255 * (1 - (light - 200) / 55) * 0.8 + 51);
-          }
-        }
-        ctx.putImageData(data, 0, 0);
-        canvas.toBlob((blob) => {
-          if (!blob || cancelled) return;
-          objectUrl = URL.createObjectURL(blob);
-          setCutSrc(objectUrl);
-        }, "image/png");
-      } catch {
-        // CORS u otro error: nos quedamos con la original + multiply
+    cutout(fetchSrc, threshold)?.then((r) => {
+      if (cancelled) return;
+      if (r.status === "transparent") setCutSrc(fetchSrc);
+      else if (r.status === "cut") {
+        objectUrl = URL.createObjectURL(r.blob);
+        setCutSrc(objectUrl);
       }
-    };
-    img.src = src;
+      // "error": nos quedamos con la original + multiply
+    });
     return () => {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);

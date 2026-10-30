@@ -117,6 +117,7 @@ export function HeroSolaris({
   fixedAnchor = false,
   mobileAnchorY,
   mobileSize,
+  eager = false,
 }: {
   className?: string;
   /** "light" = fondo blanco (default) · "dark" = fondo oscuro */
@@ -142,6 +143,11 @@ export function HeroSolaris({
   mobileAnchorY?: number;
   /** radio en canvas < 768px (por defecto, el mismo que `size`) */
   mobileSize?: number;
+  /** true = dibuja el primer cuadro apenas está a la vista (anillo del
+   *  hero, que se ve al cargar). false (default) = no se arma nada hasta la
+   *  primera interacción del usuario: los anillos de más abajo (servicios,
+   *  contacto) no suman trabajo durante la carga. */
+  eager?: boolean;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -152,7 +158,7 @@ export function HeroSolaris({
     // Nada se arma hasta que el lienzo está cerca de la vista: las instancias
     // ocultas (variantes mobile/escritorio con display:none) o más abajo en
     // la página no gastan CPU en la carga.
-    const setup = (canvas: HTMLCanvasElement): (() => void) | undefined => {
+    const setup = (canvas: HTMLCanvasElement, initialRect: DOMRectReadOnly): (() => void) | undefined => {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
@@ -253,8 +259,10 @@ export function HeroSolaris({
       let w = 0;
       let h = 0;
       let dpr = 1;
-      const resize = () => {
-        const rect = canvas.getBoundingClientRect();
+      // Tamaño inicial: el rect que ya trajo el IntersectionObserver (leer
+      // getBoundingClientRect acá forzaba un reflow). Después, el del
+      // ResizeObserver, que se calcula sin forzar layout.
+      const resize = (rect: { width: number; height: number }) => {
         dpr = Math.min(window.devicePixelRatio || 1, 2);
         w = rect.width;
         h = rect.height;
@@ -262,8 +270,18 @@ export function HeroSolaris({
         canvas.height = Math.round(h * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       };
-      resize();
-      const ro = new ResizeObserver(resize);
+      resize(initialRect);
+      let firstResize = true;
+      const ro = new ResizeObserver(([entry]) => {
+        // la primera notificación repite el tamaño inicial: no re-dibuja nada
+        if (firstResize) {
+          firstResize = false;
+          if (entry.contentRect.width === w && entry.contentRect.height === h) return;
+        }
+        resize(entry.contentRect);
+        // sin animación corriendo, volver a pintar el cuadro estático
+        if (!raf) render(reduceMotion ? 2.5 : 0);
+      });
       ro.observe(canvas);
 
       let visible = true;
@@ -576,28 +594,35 @@ export function HeroSolaris({
     };
 
     let cleanup: (() => void) | undefined;
-    let cancelIdle: (() => void) | undefined;
+    let cancelled = false;
+    let stopWaiting: (() => void) | undefined;
+    const start = (rect: DOMRectReadOnly) => {
+      if (!cancelled && !cleanup) cleanup = setup(el, rect);
+    };
     const gate = new IntersectionObserver(
       ([e]) => {
         if (!e.isIntersecting) return;
         gate.disconnect();
-        // en el próximo cuadro (no en un idle callback: con el hilo ocupado
-        // por la hidratación el anillo aparecía tarde y empeoraba el Speed Index)
-        const id = requestAnimationFrame(() => {
-          cleanup = setup(el);
-        });
-        cancelIdle = () => cancelAnimationFrame(id);
+        const rect = e.boundingClientRect;
+        if (eager) {
+          start(rect);
+        } else {
+          // anillos de más abajo: recién con la primera interacción (el
+          // usuario ya está scrolleando hacia ellos)
+          stopWaiting = onFirstInteraction(() => start(el.getBoundingClientRect()));
+        }
       },
       { rootMargin: "200px" },
     );
     gate.observe(el);
 
     return () => {
+      cancelled = true;
       gate.disconnect();
-      cancelIdle?.();
+      stopWaiting?.();
       cleanup?.();
     };
-  }, [theme, anchorX, anchorY, size, color, scrollExplode, showStars, fixedAnchor, mobileAnchorY, mobileSize]);
+  }, [theme, anchorX, anchorY, size, color, scrollExplode, showStars, fixedAnchor, mobileAnchorY, mobileSize, eager]);
 
   return (
     <div

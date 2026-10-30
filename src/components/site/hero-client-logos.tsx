@@ -74,7 +74,7 @@ export function HeroClientLogos({ clients = [] }: { clients?: Client[] }) {
       aria-label="Empresas que confían en nosotros"
       // En escritorio rompe el padding del bloque y ocupa todo el ancho de la
       // columna izquierda del hero (55vw), centrado respecto del bloque.
-      className="marquee-row marquee-fade group/marquee mt-4 pt-5 pb-2 max-md:mt-2 max-md:pt-4 lg:ml-[calc(50%-27.5vw)] lg:w-[55vw]! lg:max-w-none"
+      className="marquee-row marquee-fade group/marquee mt-4 pt-5 pb-2 max-md:mt-[clamp(0.5rem,3svh,2rem)] max-md:pt-4 lg:ml-[calc(50%-27.5vw)] lg:w-[55vw]! lg:max-w-none"
     >
       {/* más rápido que el carrusel del blog (48s por vuelta): ~2.8s por logo */}
       <div

@@ -95,12 +95,14 @@ export default async function HomePage({
             pregunta "¿Qué proyecto…?" y POR DEBAJO del recuadro del prompt
             (z-[6]; pill, título, prompt y logos van en z-[7]). */}
         <HeroSolaris
+          // se ve al cargar: primer cuadro apenas está a la vista
+          eager
           className="max-md:z-[6]"
           theme={gradientTest ? "dark" : "light"}
           anchorX={0.775}
           anchorY={0.55}
           background={false}
-          mobileAnchorY={0.66}
+          mobileAnchorY={0.6}
           mobileSize={0.36}
         />
         {/* Estatua: en escritorio, centrada (horizontal y vertical) en la columna
@@ -136,16 +138,16 @@ export default async function HomePage({
             del hero: arranca debajo del header y termina a la misma distancia del
             fondo que la estatua (bottom-[4%] = max(4svh, 24px)), con el contenido
             centrado verticalmente adentro. */}
-        <div className="relative z-10 max-md:z-auto w-full px-6 md:px-10 lg:px-0 lg:pb-[max(4svh,24px)] lg:pt-[calc(var(--site-header-height,69px)+max(4svh,24px))]">
+        <div className="relative z-10 max-md:z-auto w-full px-6 max-md:pt-[var(--site-header-height,72px)] md:px-10 lg:px-0 lg:pb-[max(4svh,24px)] lg:pt-[calc(var(--site-header-height,69px)+max(4svh,24px))]">
           <div className="flex justify-center lg:h-full lg:w-[55vw] lg:px-10">
-            <div className="@container relative w-full max-w-2xl py-6 max-md:flex max-md:flex-col max-md:items-center md:p-10 lg:flex lg:h-full lg:w-full lg:max-w-[52rem] lg:flex-col lg:[justify-content:safe_center] lg:*:shrink-0">
+            <div className="@container relative w-full max-w-2xl py-6 max-md:flex max-md:min-h-[calc(100svh-var(--site-header-height,72px))] max-md:flex-col max-md:items-center max-md:pb-[calc(max(1rem,env(safe-area-inset-bottom))+4.25rem)] max-md:pt-[clamp(1.5rem,5svh,3rem)] md:p-10 lg:flex lg:h-full lg:w-full lg:max-w-[52rem] lg:flex-col lg:[justify-content:safe_center] lg:*:shrink-0">
               {hero_pill_text && (
                 // Pill sólida: fondo violeta de Crabsense y texto blanco.
                 <TagPill
                   tone="category"
                   variant="solid"
                   color="#53539b"
-                  className={cn("mb-4 mt-16 border-2 border-[#53539b] px-3.5 py-1 text-sm font-bold max-md:relative max-md:z-[7] sm:mb-5 md:mt-0 sm:px-4 sm:py-1 sm:text-base")}
+                  className={cn("mb-4 border-2 border-[#53539b] px-3.5 py-1 text-sm font-bold max-md:relative max-md:z-[7] max-md:mb-[clamp(1.25rem,3.5svh,2.25rem)] sm:mb-5 sm:px-4 sm:py-1 sm:text-base")}
                 >
                   {hero_pill_text}
                 </TagPill>
@@ -154,12 +156,15 @@ export default async function HomePage({
                 // Desde md el tamaño es fluido (11.5cqw del bloque de texto) para que
                 // el título entre siempre en 2 líneas: la línea más larga ("Crece con
                 // tus datos") mide ~8.4em en Google Sans Flex con este tracking.
-                <h1 className="mb-14 text-balance font-heading max-md:relative max-md:z-[7] max-md:text-center text-[3.375rem] font-normal leading-[1.05] tracking-[-0.04em] text-[#4a4a4a] sm:text-[4.25rem] md:text-[11.5cqw]">
+                <h1 className="mb-14 max-md:mb-[clamp(2.5rem,7svh,4.5rem)] text-balance font-heading max-md:relative max-md:z-[7] max-md:text-center text-[3.375rem] font-normal leading-[1.05] tracking-[-0.04em] text-[#4a4a4a] sm:text-[4.25rem] md:text-[11.5cqw]">
                   {hero_title}
                 </h1>
               )}
               <HeroPromptBox headingAs={hero_title ? "h2" : "h1"} mobileHero minInputHeight={80} className="max-md:pt-4" />
-              <div className="relative z-[7] w-full">
+              {/* mobile: los logos van al fondo del hero (mt-auto), justo
+                  arriba del botón flotante "Contactar"; el resto del bloque
+                  queda arriba */}
+              <div className="relative z-[7] w-full max-md:mt-auto">
                 <HeroClientLogos clients={clients} />
               </div>
             </div>
