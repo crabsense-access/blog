@@ -1,3 +1,5 @@
+import { DEVICE_SIZES, IMAGE_SIZES } from "@/lib/image-sizes";
+
 // Anchos servidos en el srcset de Unsplash para la imagen de portada
 // (el elemento LCP de la página del post). Cubre desde mobile angosto
 // hasta un monitor grande a 2x DPR sin pedir de más en el resto de casos.
@@ -63,9 +65,9 @@ function parseUrl(url: string): URL | null {
   }
 }
 
-// Anchos que acepta el optimizador de Next (/_next/image): la unión de los
-// imageSizes y deviceSizes por defecto. Un `w` fuera de esta lista da 400.
-const NEXT_IMAGE_WIDTHS = [32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840];
+// Anchos que acepta el optimizador de Next (/_next/image): la unión de
+// imageSizes y deviceSizes de next.config.ts. Un `w` fuera de esta lista da 400.
+const NEXT_IMAGE_WIDTHS = [...IMAGE_SIZES, ...DEVICE_SIZES];
 
 const SUPABASE_HOST = (() => {
   try {
@@ -101,4 +103,10 @@ export function optimizedStorageImage(url: string, width: number): string {
     return url;
   }
   return `/_next/image?url=${encodeURIComponent(url)}&w=${nextImageWidth(width)}&q=75`;
+}
+
+/** srcset con w-descriptors para una imagen de Storage (ver optimizedStorageImage). */
+export function storageImageSrcSet(url: string, widths: number[]): string | undefined {
+  if (optimizedStorageImage(url, widths[0]) === url) return undefined;
+  return widths.map((w) => `${optimizedStorageImage(url, w)} ${nextImageWidth(w)}w`).join(", ");
 }

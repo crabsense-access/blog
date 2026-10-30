@@ -48,10 +48,10 @@ export function CutoutImage({
         io.disconnect();
         const rect = el.getBoundingClientRect();
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        // object-contain: la figura nunca supera el lado largo de la caja
-        // (+15% por los scale-[1.1x] de algunas imágenes)
-        const shown = Math.max(rect.width, rect.height) > 0 ? Math.max(rect.width, rect.height) : 600;
-        setFetchSrc(optimizedStorageImage(src, Math.ceil(shown * dpr * 1.15)));
+        // object-contain con figuras casi cuadradas: se ven del tamaño del
+        // lado corto de la caja
+        const shown = Math.min(rect.width, rect.height) > 0 ? Math.min(rect.width, rect.height) : 600;
+        setFetchSrc(optimizedStorageImage(src, Math.ceil(shown * dpr)));
       },
       { rootMargin: "400px" },
     );

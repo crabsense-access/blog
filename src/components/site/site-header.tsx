@@ -87,7 +87,11 @@ export function SiteHeader() {
             <img
               src="/crabsense-logo.svg"
               alt="Crabsense"
-              className="h-10 w-auto"
+              // medidas explícitas (proporción del SVG: 954×185) y block, así
+              // el logo no cambia de ancho al cargar ni suma espacio de línea
+              width={206}
+              height={40}
+              className="block h-10 w-auto"
             />
           </Link>
 

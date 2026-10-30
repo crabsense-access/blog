@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
 
-import { optimizedStorageImage } from "@/lib/image-url";
+import { optimizedStorageImage, storageImageSrcSet } from "@/lib/image-url";
 import { successCaseService, type SuccessCase } from "@/lib/success-cases";
 
 /**
@@ -72,7 +72,7 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
         // eslint-disable-next-line @next/next/no-img-element -- imagen de Supabase Storage, el proyecto usa <img> plano
         <img
           src={optimizedStorageImage(item.image_url, 1920)}
-          srcSet={[640, 1080, 1920].map((w) => `${optimizedStorageImage(item.image_url!, w)} ${w}w`).join(", ")}
+          srcSet={storageImageSrcSet(item.image_url, [640, 828, 1080, 1200, 1920])}
           sizes="100vw"
           alt=""
           loading="lazy"
@@ -98,7 +98,10 @@ function SuccessCaseCard({ item }: { item: SuccessCase }) {
           {item.logo_url && (
             // eslint-disable-next-line @next/next/no-img-element -- logo de Supabase Storage
             <img
-              src={optimizedStorageImage(item.logo_url, 640)}
+              src={optimizedStorageImage(item.logo_url, 320)}
+              srcSet={storageImageSrcSet(item.logo_url, [256, 320, 384, 512, 640])}
+              // ancho máximo del logo: max-w-64 (mobile) / max-w-80 (md+)
+              sizes="(min-width: 768px) 320px, 256px"
               alt={item.client_name}
               loading="lazy"
               decoding="async"

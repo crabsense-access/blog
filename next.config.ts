@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { DEVICE_SIZES, IMAGE_SIZES } from "./src/lib/image-sizes";
+
 // Único host permitido para next/image: el bucket público de Supabase
 // Storage de este proyecto (portadas de posts, fotos de autor, fondos de
 // categoría/subcategoría, logos de clientes). Nada de wildcards ni otros
@@ -40,6 +42,8 @@ const nextConfig: NextConfig = {
     // año. Supabase los sirve con max-age de 1h (PageSpeed: "Use efficient
     // cache lifetimes").
     minimumCacheTTL: 31536000,
+    imageSizes: IMAGE_SIZES,
+    deviceSizes: DEVICE_SIZES,
     remotePatterns: supabaseHostname
       ? [
           {

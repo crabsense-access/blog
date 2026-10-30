@@ -110,7 +110,16 @@ export default async function HomePage({
             que en mobile el <img> apunta a un GIF vacío y solo desde 1024px
             el <source> pide la estatua. */}
         <picture>
-          <source media="(min-width: 1024px)" srcSet="/hero-estatua.webp" type="image/webp" />
+          {/* Se muestra a ~74% del alto del hero (proporción 656×1175 →
+              ancho ≈ 74svh × 0.558): versiones redimensionadas por
+              /_next/image en vez del original de 656px para todos. */}
+          <source
+            media="(min-width: 1024px)"
+            srcSet={[320, 384, 448, 512, 576, 640, 750]
+              .map((w) => `/_next/image?url=%2Fhero-estatua.webp&w=${w}&q=75 ${w}w`)
+              .join(", ")}
+            sizes="calc(74svh * 0.558)"
+          />
           <img
             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
             alt="Estatua romana sentada usando un smartphone y auriculares"

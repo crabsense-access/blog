@@ -55,7 +55,7 @@ export function SiteFooter() {
           <div className="col-span-3 max-w-sm max-md:mx-auto max-md:text-center md:col-span-1">
             <Link href="/" className="inline-block transition-opacity hover:opacity-80">
               {/* eslint-disable-next-line @next/next/no-img-element -- el proyecto usa <img> plano para assets estáticos */}
-              <img src="/crabsense-logo-white.svg" alt="Crabsense" className="h-10 w-auto" />
+              <img src="/crabsense-logo-white.svg" alt="Crabsense" width={206} height={40} className="block h-10 w-auto" />
             </Link>
             <p className="mt-6 font-heading text-lg font-extralight leading-snug text-white/60">
               Analytics, SEO y performance apoyados con IA para que tu negocio crezca con datos.

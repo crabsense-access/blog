@@ -75,18 +75,13 @@ export function HeroPromptBox({
    *  pregunta (por defecto 0.64, igual que en escritorio) */
   mobileFitRatio?: number;
 }) {
-  // mobile = < 768px (breakpoint md de Tailwind)
-  const [isMobile, setIsMobile] = useState(false);
-  useEffect(() => {
-    if (!mobileHero) return;
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, [mobileHero]);
-  const mobileFull = mobileHero && isMobile;
-  const inputMinHeight = mobileFull ? Math.max(minInputHeight + 24, 96) : minInputHeight;
+  // Hero mobile (< 768px, breakpoint md): los ajustes van por CSS
+  // (max-md:) y no por un estado de React. Antes se detectaba con
+  // matchMedia en un useEffect: el HTML del servidor salía con la versión de
+  // escritorio y al hidratar el recuadro crecía ~28px, empujando todo el
+  // hero (PageSpeed: Cumulative Layout Shift).
+  const mobileInputMinHeight = mobileHero ? Math.max(minInputHeight + 24, 96) : minInputHeight;
+  const isMobileHero = () => mobileHero && window.matchMedia("(max-width: 767px)").matches;
   const [step, setStep] = useState<Step>("prompt");
   const [message, setMessage] = useState("");
   const [services, setServices] = useState<LeadService[]>(defaultServices);
@@ -122,7 +117,7 @@ export function HeroPromptBox({
     if (!h1 || !text) return;
     const fit = () => {
       // hero mobile: tamaño fijo (por CSS) en dos líneas, sin ajuste por ancho
-      if (mobileFull) {
+      if (isMobileHero()) {
         h1.style.fontSize = "";
         return;
       }
@@ -130,17 +125,24 @@ export function HeroPromptBox({
         mobileFitRatio && window.innerWidth < 768 ? mobileFitRatio : 0.64;
       const target = h1.clientWidth * ratio;
       if (!target) return;
-      const base = 100;
-      h1.style.fontSize = `${base}px`;
+      // El ancho del texto (nowrap) es proporcional al tamaño de letra: se
+      // escala desde el tamaño actual con una sola lectura, sin escribir
+      // 100px y volver a medir (eso forzaba un reflow por cada prompt de la
+      // página; PageSpeed: "Forced reflow").
+      const current = parseFloat(getComputedStyle(h1).fontSize);
       const w = text.getBoundingClientRect().width;
-      if (w) h1.style.fontSize = `${(base * target) / w}px`;
+      if (!w || !current) return;
+      const next = (current * target) / w;
+      if (Math.abs(next - current) > 0.25) h1.style.fontSize = `${next}px`;
     };
-    fit();
+    // ResizeObserver ya llama a fit() una vez al empezar a observar, después
+    // del layout (no hace falta una llamada sincrónica en el montaje)
     const ro = new ResizeObserver(fit);
     ro.observe(h1);
     document.fonts?.ready.then(fit);
     return () => ro.disconnect();
-  }, [mobileFull, mobileFitRatio]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isMobileHero solo lee mobileHero
+  }, [mobileHero, mobileFitRatio]);
 
   const canSend = message.trim().length > 0 || services.length > 0;
 
@@ -149,8 +151,10 @@ export function HeroPromptBox({
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, Math.max(168, inputMinHeight))}px`;
-  }, [message, inputMinHeight]);
+    const min = isMobileHero() ? mobileInputMinHeight : minInputHeight;
+    el.style.height = `${Math.min(el.scrollHeight, Math.max(168, min))}px`;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isMobileHero solo lee mobileHero
+  }, [message, minInputHeight, mobileInputMinHeight, mobileHero]);
 
   // cerrar el menú al hacer click afuera o con Esc
   useEffect(() => {
@@ -271,7 +275,8 @@ export function HeroPromptBox({
             "relative mb-3 whitespace-nowrap pl-[2%] text-[3.9cqi]",
             "font-light leading-tight tracking-tight text-[#4a4a4a]",
             // hero mobile: sin sangría y en negrita
-            mobileFull && "whitespace-normal text-balance pl-0 text-center text-[1.25rem]! font-bold leading-[1.1]",
+            mobileHero &&
+              "max-md:whitespace-normal max-md:text-balance max-md:pl-0 max-md:text-center max-md:text-[1.25rem]! max-md:font-bold max-md:leading-[1.1]",
             questionClassName
           )}
         >
@@ -294,7 +299,7 @@ export function HeroPromptBox({
         className={cn(
           "relative rounded-[28px] border p-3",
           // hero mobile: el recuadro queda por encima del anillo animado
-          mobileFull && "z-[7]",
+          mobileHero && "max-md:z-[7]",
           transparent
             ? "border-neutral-200/70 bg-white/30 backdrop-blur-sm"
             : "border-neutral-200 bg-white/90 shadow-[0_10px_40px_-12px_rgba(61,60,137,0.25)] backdrop-blur"
@@ -324,8 +329,13 @@ export function HeroPromptBox({
                 }
               }}
               placeholder={placeholder}
-              style={{ minHeight: inputMinHeight }}
-              className="block min-h-[48px] w-full resize-none bg-transparent px-2 py-2 text-base text-neutral-950 placeholder:text-neutral-400 focus:outline-none"
+              style={
+                {
+                  "--input-min": `${minInputHeight}px`,
+                  "--input-min-mobile": `${mobileInputMinHeight}px`,
+                } as React.CSSProperties
+              }
+              className="block min-h-[var(--input-min)] max-md:min-h-[var(--input-min-mobile)] w-full resize-none bg-transparent px-2 py-2 text-base text-neutral-950 placeholder:text-neutral-400 focus:outline-none"
             />
             <div className="mt-1 flex items-center justify-between">
               <div className="relative">

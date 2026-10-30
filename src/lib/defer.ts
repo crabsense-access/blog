@@ -39,13 +39,3 @@ export function onFirstInteraction(cb: () => void): () => void {
     waiting.delete(cb);
   };
 }
-
-/** requestIdleCallback con fallback a setTimeout. Devuelve cleanup. */
-export function whenIdle(cb: () => void, timeout = 2000): () => void {
-  if (typeof window.requestIdleCallback === "function") {
-    const id = window.requestIdleCallback(cb, { timeout });
-    return () => window.cancelIdleCallback(id);
-  }
-  const id = window.setTimeout(cb, 200);
-  return () => window.clearTimeout(id);
-}

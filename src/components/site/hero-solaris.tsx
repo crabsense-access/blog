@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import { onFirstInteraction, whenIdle } from "@/lib/defer";
+import { onFirstInteraction } from "@/lib/defer";
 
 /**
  * "Solaris" con los colores de Crabsense: una esfera hecha de miles de
@@ -547,12 +547,17 @@ export function HeroSolaris({
       };
 
       // Primer cuadro estático (t = 0): sirve también de benchmark para elegir
-      // la densidad una sola vez. Antes eran 4 renders seguidos en el montaje
-      // de cada instancia (9 en la home), un long task enorme justo al hidratar.
+      // la densidad una sola vez. Antes eran 4 renders completos seguidos en
+      // el montaje de cada instancia (9 en la home), un long task enorme.
+      // Se dibuja con 1 de cada 3 anillos (un tercio del costo, así no es un
+      // long task en celulares lentos) y con ese tiempo se estima el costo
+      // del cuadro completo para elegir la densidad de la animación.
+      step = 3;
       const t0 = performance.now();
       render(reduceMotion ? 2.5 : 0);
-      const cost = performance.now() - t0;
-      if (!reduceMotion) step = cost > 24 ? 3 : cost > 12 ? 2 : 1;
+      const cost = (performance.now() - t0) * 3;
+      step = reduceMotion ? 1 : cost > 24 ? 3 : cost > 12 ? 2 : 1;
+      if (reduceMotion) render(2.5);
       // La animación arranca con la primera interacción (mouse, toque, scroll,
       // teclado): durante la carga el hilo principal queda libre (TBT / LCP).
       const stopWaiting = onFirstInteraction(() => {
@@ -576,9 +581,12 @@ export function HeroSolaris({
       ([e]) => {
         if (!e.isIntersecting) return;
         gate.disconnect();
-        cancelIdle = whenIdle(() => {
+        // en el próximo cuadro (no en un idle callback: con el hilo ocupado
+        // por la hidratación el anillo aparecía tarde y empeoraba el Speed Index)
+        const id = requestAnimationFrame(() => {
           cleanup = setup(el);
         });
+        cancelIdle = () => cancelAnimationFrame(id);
       },
       { rootMargin: "200px" },
     );
