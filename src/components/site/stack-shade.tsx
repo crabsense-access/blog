@@ -22,16 +22,19 @@ export function StackShade() {
       const cards = Array.from(
         container.querySelectorAll<HTMLElement>("[data-stack-card]"),
       );
+      // primero todas las lecturas y después todas las escrituras: alternarlas
+      // forzaba un recálculo de layout por card (PageSpeed: "Forced reflow")
+      const tops = cards.map((card) => card.getBoundingClientRect().top);
+      const heights = cards.map((card) => card.offsetHeight);
       cards.forEach((card, i) => {
-        const next = cards[i + 1];
-        if (!next) {
+        if (i === cards.length - 1) {
           card.style.setProperty("--cover", "0");
           return;
         }
-        const h = card.offsetHeight;
+        const h = heights[i];
         // distancia entre el borde superior de esta card y el de la siguiente:
         // >= alto de la card → todavía no la tapa; ~0 → ya está apilada encima
-        const d = next.getBoundingClientRect().top - card.getBoundingClientRect().top;
+        const d = tops[i + 1] - tops[i];
         const progress = Math.min(1, Math.max(0, (h - d) / (h * 0.85)));
         card.style.setProperty("--cover", progress.toFixed(3));
       });
@@ -40,7 +43,10 @@ export function StackShade() {
     const onScroll = () => {
       if (!raf) raf = requestAnimationFrame(update);
     };
-    update();
+    // Sin medición inicial: arriba de todo ninguna card tapa a otra (--cover
+    // ya vale 0 por CSS). Medir en el montaje forzaba un recálculo de layout
+    // durante la hidratación (PageSpeed: "Forced reflow"). Si el navegador
+    // restaura el scroll a mitad de página, eso dispara un "scroll" igual.
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {

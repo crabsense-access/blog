@@ -42,7 +42,9 @@ export function FadingStickyTitle({
       if (!raf) raf = requestAnimationFrame(update);
     };
 
-    update();
+    // Sin medición inicial: arriba de todo el título no se desplaza. Medir en
+    // el montaje forzaba un recálculo de layout durante la hidratación
+    // (PageSpeed: "Forced reflow"). Restaurar el scroll dispara "scroll" igual.
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {

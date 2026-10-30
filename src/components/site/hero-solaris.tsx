@@ -209,8 +209,13 @@ export function HeroSolaris({
       // --- explosión ligada al scroll ---
       // 0 = arriba de todo (esfera armada) · 1 = scrolleado el 45% del hero
       let scrollK = 0; // valor suavizado
+      // Posición del lienzo en el documento, cacheada (se actualiza en cada
+      // resize): leer getBoundingClientRect en cada cuadro forzaba un
+      // recálculo de layout (PageSpeed: "Forced reflow").
+      let cachedDocTop = initialRect.top + window.scrollY;
+      let cachedHeight = initialRect.height;
       const scrollTarget = () => {
-        const rect = canvas.getBoundingClientRect();
+        const rect = { top: cachedDocTop - window.scrollY, height: cachedHeight };
         const range = Math.max(1, rect.height * 0.45);
         // El hero sube por detrás del header (-mt-[--site-header-height]), así
         // que con la página arriba de todo el canvas ya arranca con top < 0.
@@ -279,6 +284,9 @@ export function HeroSolaris({
           if (entry.contentRect.width === w && entry.contentRect.height === h) return;
         }
         resize(entry.contentRect);
+        cachedHeight = entry.contentRect.height;
+        // el RO no informa la posición: se lee una vez acá (no en cada cuadro)
+        cachedDocTop = canvas.getBoundingClientRect().top + window.scrollY;
         // sin animación corriendo, volver a pintar el cuadro estático
         if (!raf) render(reduceMotion ? 2.5 : 0);
       });

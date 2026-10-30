@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { onFirstInteraction } from "@/lib/defer";
+
 /**
  * Fondo del hero: manchas chicas y difuminadas en los colores más oscuros
  * del logo de Crabsense, que recorren todo el hero (de lado a lado y de
@@ -182,15 +184,28 @@ export function HeroAurora({
     place(0);
     if (reduceMotion) return () => ro.disconnect();
 
+    // Solo anima mientras está a la vista (oculto con display:none, como en
+    // escritorio, nunca lo está) y recién desde la primera interacción: antes
+    // corría un requestAnimationFrame permanente desde la carga aunque no se
+    // viera (PageSpeed: Total Blocking Time / Forced reflow).
+    let visible = false;
+    const io = new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+    });
+    io.observe(wrap);
     let raf = 0;
     const loop = (now: number) => {
-      place((now - start) / 1000);
       raf = requestAnimationFrame(loop);
+      if (visible) place((now - start) / 1000);
     };
-    raf = requestAnimationFrame(loop);
+    const stopWaiting = onFirstInteraction(() => {
+      raf = requestAnimationFrame(loop);
+    });
     return () => {
+      stopWaiting();
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io.disconnect();
     };
   }, [desktopAvoidBottom]);
 

@@ -13,8 +13,13 @@ let interacted = false;
 const waiting = new Set<() => void>();
 let listening = false;
 
-function onInteraction() {
+function onInteraction(e: Event) {
   if (interacted) return;
+  // "scroll" se escucha en captura, así que también llegan los scrolls de
+  // elementos internos (carruseles que acomodan su posición al montar, sin
+  // que el usuario haga nada). Solo cuenta el scroll de la página.
+  if (e.type === "scroll" && e.target !== document && e.target !== document.documentElement) return;
+  if (!e.isTrusted) return;
   interacted = true;
   for (const evt of INTERACTION_EVENTS) window.removeEventListener(evt, onInteraction, true);
   const cbs = [...waiting];
