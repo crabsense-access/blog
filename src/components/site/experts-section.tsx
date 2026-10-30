@@ -34,7 +34,7 @@ export function ExpertsSection({ experts }: { experts: Profile[] }) {
                     {expert.full_name ?? "Autor"} <span aria-hidden>→</span>
                   </p>
                   {expert.public_title && (
-                    <p className="mt-1 text-sm text-neutral-400">{expert.public_title}</p>
+                    <p className="mt-1 text-sm text-neutral-500">{expert.public_title}</p>
                   )}
                 </div>
               </Link>

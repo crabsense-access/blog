@@ -193,7 +193,7 @@ export default async function HomePage({
                   /
                 </span>
                 {/* escritorio: mismo gris que el titular del hero */}
-                <span className="font-extralight text-neutral-400 md:font-normal md:text-[#4a4a4a]">
+                <span className="font-extralight text-[#8a8a8a] md:font-normal md:text-[#4a4a4a]">
                   <span className="hidden md:inline">Artículos más vistos</span>
                   <span className="md:hidden">Más vistos</span>
                 </span>

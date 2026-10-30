@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
+import { readableOn } from "@/lib/color";
 import { cn } from "@/lib/utils";
 
 // En escritorio (md+), las pills de los items del blog (cards de notas y nota
@@ -60,13 +61,16 @@ export function TagPill({
     <span
       className={cn(
         "group/pill relative isolate inline-flex w-fit items-center gap-1 overflow-hidden whitespace-nowrap rounded-full border-2 bg-transparent px-3 py-1 text-xs font-bold uppercase",
-        "[border-color:var(--pill-color)] [color:var(--pill-color)] hover:[border-color:var(--pill-hover-color)]",
+        "[border-color:var(--pill-color)] [color:var(--pill-text-color)] hover:[border-color:var(--pill-hover-color)]",
         "transition-colors duration-300 hover:text-white",
         className
       )}
       style={
         {
           "--pill-color": customColor || "#9ca3af",
+          // texto: el mismo color, oscurecido si no llega a 4.5:1 sobre
+          // blanco (ej. ADS #4ba5b9); el borde sigue en el color de marca
+          "--pill-text-color": readableOn(customColor || "#6b7280"),
           "--pill-hover-color": customHoverColor || customColor || "#9ca3af",
         } as CSSProperties
       }
@@ -94,7 +98,11 @@ export function TagPill({
       )}
       style={
         customColor
-          ? { backgroundColor: customColor, color: "#ffffff", borderColor: customColor }
+          ? (() => {
+              // texto blanco: el fondo se oscurece si no llega a 4.5:1
+              const bg = readableOn(customColor);
+              return { backgroundColor: bg, color: "#ffffff", borderColor: bg };
+            })()
           : undefined
       }
     >

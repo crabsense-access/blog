@@ -29,7 +29,7 @@ export function SuccessCasesSection({ cases }: { cases: SuccessCase[] }) {
         className="mb-10 px-6 text-center md:px-10 font-heading text-[2.125rem] font-normal leading-tight md:text-[2.5rem] tracking-tight text-[#4a4a4a]"
       >
         Casos de éxito{" "}
-        <span className="font-extralight text-neutral-400">que hablan por nosotros</span>
+        <span className="font-extralight text-[#8a8a8a]">que hablan por nosotros</span>
       </h2>
 
       {/* Mismo contenedor y padding lateral que el resto del sitio. Las

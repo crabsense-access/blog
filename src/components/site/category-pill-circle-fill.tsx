@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
+import { readableOn } from "@/lib/color";
 import { cn } from "@/lib/utils";
 
 interface CategoryPillCircleFillProps {
@@ -37,11 +38,17 @@ export function CategoryPillCircleFill({
     <span
       className={cn(
         "group/pill relative isolate inline-flex w-fit items-center gap-1 overflow-hidden whitespace-nowrap rounded-full border-2 bg-transparent px-3 py-1 text-xs font-bold uppercase",
-        "[border-color:var(--pill-color)] [color:var(--pill-color)]",
+        "[border-color:var(--pill-color)] [color:var(--pill-text-color)]",
         "transition-colors duration-300 hover:text-white",
         className
       )}
-      style={{ "--pill-color": color || "#9ca3af" } as CSSProperties}
+      style={
+        {
+          "--pill-color": color || "#9ca3af",
+          // texto oscurecido si el color no llega a 4.5:1 sobre blanco
+          "--pill-text-color": readableOn(color || "#6b7280"),
+        } as CSSProperties
+      }
     >
       <span
         aria-hidden="true"

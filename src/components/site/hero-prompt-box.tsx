@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { ArrowUp, Check, Loader2, Plus, X } from "lucide-react";
 
 import { submitLead } from "@/app/(site)/lead-actions";
+import { readableOn, tintOnWhite } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import {
   LEAD_SERVICE_OPTIONS,
@@ -239,7 +240,11 @@ export function HeroPromptBox({
             // color del servicio: texto en el color y fondo del mismo color
             // muy clarito (hex + "1f" = ~12% de opacidad)
             className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold tracking-wide"
-            style={{ color: colorOf(s), backgroundColor: `${colorOf(s)}1f` }}
+            style={{
+              // texto oscurecido si no llega a 4.5:1 sobre el fondo tintado
+              color: readableOn(colorOf(s), tintOnWhite(colorOf(s), 0x1f / 255)),
+              backgroundColor: `${colorOf(s)}1f`,
+            }}
           >
             {labelOf(s)}
             {removable && (
@@ -346,7 +351,7 @@ export function HeroPromptBox({
                     role="menu"
                     className="absolute bottom-11 left-0 z-20 w-72 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl"
                   >
-                    <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+                    <p className="px-3 pb-1 pt-2 text-xs font-medium uppercase tracking-wide text-neutral-500">
                       Tipo de proyecto
                     </p>
                     {LEAD_SERVICE_OPTIONS.map((o) => {

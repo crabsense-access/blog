@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 
+import { readableOn } from "@/lib/color";
 import { cn } from "@/lib/utils";
 
 import { CutoutImage } from "@/components/site/cutout-image";
@@ -292,7 +293,7 @@ export function ServicesStickySection({
             className="z-20 mb-4 bg-white/95 px-4 py-3 text-center font-heading text-[2.125rem] font-normal md:text-[2.5rem] leading-tight tracking-tight text-[#4a4a4a] backdrop-blur lg:sticky lg:top-[var(--site-header-height,77px)] lg:ml-[calc(50%-50vw)] lg:w-screen"
           >
             Nuestros servicios{" "}
-            <span className="font-extralight text-neutral-400">apoyados con IA</span>
+            <span className="font-extralight text-[#8a8a8a]">apoyados con IA</span>
           </FadingStickyTitle>
 
           {services.slice(0, TITLE_STICKY_BLOCKS).map((service) => (
@@ -532,7 +533,7 @@ function ServiceBlock({
             <div className="flex items-start justify-between gap-4">
               <span
                 className="text-base font-bold uppercase tracking-wide"
-                style={{ color: service.color }}
+                style={{ color: readableOn(service.color) }}
               >
                 Problema {String(i + 1).padStart(2, "0")}
               </span>
